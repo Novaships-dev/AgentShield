@@ -1,0 +1,41 @@
+{
+  "name": "NovaShips-Dev",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+
+  // Commandes exécutées automatiquement à la création du Codespace
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code && npm install -g bun && bun install",
+
+  // Ports à exposer (Remotion Studio + render server)
+  "forwardPorts": [3000, 3099],
+  "portsAttributes": {
+    "3000": {
+      "label": "Remotion Studio",
+      "onAutoForward": "openBrowser"
+    },
+    "3099": {
+      "label": "Render Server",
+      "onAutoForward": "silent"
+    }
+  },
+
+  // Extensions VS Code auto-installées
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.tabSize": 2,
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "typescript.enablePromptUseWorkspaceTsdk": true
+      }
+    }
+  }
+}
