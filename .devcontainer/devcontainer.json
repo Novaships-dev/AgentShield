@@ -1,40 +1,57 @@
 {
-  "name": "NovaShips-Dev",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "name": "AgentCostGuard-Dev",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
 
-  // Commandes exécutées automatiquement à la création du Codespace
-  "postCreateCommand": "npm install -g @anthropic-ai/claude-code && npm install -g bun && bun install",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/redis-server:1": {}
+  },
 
-  // Ports à exposer (Remotion Studio + render server)
-  "forwardPorts": [3000, 3099],
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code",
+
+  "forwardPorts": [8000, 3000, 6379],
   "portsAttributes": {
+    "8000": {
+      "label": "FastAPI Backend",
+      "onAutoForward": "notify"
+    },
     "3000": {
-      "label": "Remotion Studio",
+      "label": "Next.js Frontend",
       "onAutoForward": "openBrowser"
     },
-    "3099": {
-      "label": "Render Server",
+    "6379": {
+      "label": "Redis",
       "onAutoForward": "silent"
     }
   },
 
-  // Extensions VS Code auto-installées
   "customizations": {
     "vscode": {
       "extensions": [
+        "ms-python.python",
+        "ms-python.pylint",
+        "charliermarsh.ruff",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
         "ms-vscode.vscode-typescript-next",
-        "formulahendry.auto-rename-tag",
         "christian-kohler.path-intellisense"
       ],
       "settings": {
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.tabSize": 2,
-        "typescript.tsdk": "node_modules/typescript/lib",
-        "typescript.enablePromptUseWorkspaceTsdk": true
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.tabSize": 4
+        },
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "typescript.tsdk": "node_modules/typescript/lib"
       }
     }
   }
