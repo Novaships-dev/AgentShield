@@ -1,147 +1,109 @@
-# SPEC.md — Spécifications fonctionnelles AgentCostGuard
+# SPEC.md — Spécifications fonctionnelles AgentShield
 
-> Ce fichier décrit chaque feature en détail fonctionnel. Claude Code le lit avant de coder n'importe quelle feature pour comprendre exactement ce que l'utilisateur voit, ce qu'il fait, et ce qui se passe derrière.
+> Ce fichier décrit chaque feature en détail fonctionnel. Claude Code le lit avant de coder n'importe quelle feature.
 > Cohérent avec : CONTEXT.md (source de vérité), ARCH.md (architecture technique)
 > Dernière mise à jour : mars 2026
 
 ---
 
-## 1. ONBOARDING GUIDÉ
+# MODULE MONITOR
 
-### User story
-En tant que nouveau dev, je veux être guidé step-by-step de l'inscription à mon premier event tracké, pour que je voie la valeur du produit en moins de 5 minutes.
+## 1. ONBOARDING GUIDÉ
 
 ### Flow complet
 
 ```
 Signup (email ou Google OAuth)
     │
-    ├── Step 1 : Welcome screen
-    │   "Welcome to AgentCostGuard. Let's track your first AI cost in under 2 minutes."
-    │   → Création automatique de l'organization + plan Free
-    │   → Génération automatique d'une API key
+    ├── Step 1 : Welcome
+    │   "Welcome to AgentShield. Let's monitor your first AI agent in 2 minutes."
+    │   → Création auto organization + plan Free + API key
     │
     ├── Step 2 : Copy your API key
-    │   → Afficher la clé (une seule fois, en clair)
-    │   → Bouton "Copy" avec confirmation visuelle
-    │   → Warning : "Save this key. You won't see it again."
+    │   → Afficher une seule fois. Bouton Copy. Warning "save this key".
     │
     ├── Step 3 : Install the SDK
-    │   → Code block copiable : pip install agentcostguard
-    │   → Tab switch : Python SDK / API directe / cURL
-    │   → Code example complet avec la clé pré-remplie
+    │   → pip install agentshield
+    │   → Tabs : Python SDK / LangChain / CrewAI / API directe / cURL
+    │   → Code example avec clé pré-remplie
     │
     ├── Step 4 : Send your first event
-    │   → Polling toutes les 2s : "Waiting for your first event..."
-    │   → Animation pulse sur le bouton
-    │   → Dès qu'un event arrive → confetti animation
-    │   → "Your first event is tracked! Cost: $0.0234"
+    │   → Polling 2s : "Waiting for your first event..."
+    │   → Dès qu'un event arrive → confetti + "Your first event! Cost: $0.023"
+    │   → Timeout 5min → troubleshooting guide
     │
     └── Step 5 : Go to dashboard
-        → Redirect vers /dashboard avec l'event visible
-        → Tooltip tour (3 tooltips max) sur les éléments clés
+        → Redirect /dashboard avec l'event visible
+        → 3 tooltips max sur les éléments clés
 ```
 
 ### Règles métier
-- L'onboarding est skippable à tout moment (lien "Skip" discret)
-- Si l'utilisateur revient sans avoir terminé, reprendre au step où il s'est arrêté
-- L'API key générée à l'onboarding est nommée "Default Key"
-- Le plan Free est activé automatiquement, pas de carte bancaire requise
-- Le step 4 a un timeout de 5 minutes. Après → "No event yet? Check our troubleshooting guide" + lien vers /docs
-
-### Edge cases
-- L'utilisateur s'inscrit avec Google OAuth mais a déjà un compte email → merge automatique
-- L'utilisateur ferme le navigateur au step 3 → l'org et la key existent déjà, reprendre au step 3
-- Deux signups simultanés avec le même email → Supabase Auth gère le conflit
+- Skippable à tout moment (lien "Skip" discret)
+- Reprend au step où l'utilisateur s'est arrêté
+- API key nommée "Default Key"
+- Plan Free auto, pas de CB requise
 
 ---
 
 ## 2. DASHBOARD TEMPS RÉEL
 
-### User story
-En tant que dev, je veux voir mes coûts IA apparaître en temps réel sur le dashboard, sans refresh, pour avoir une visibilité instantanée.
-
 ### Vue principale (/dashboard)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  AgentCostGuard          [Search] [Alerts 🔴2] [Settings]  │
+│  AgentShield          [Search] [Alerts 🔴2] [Settings]     │
 ├────────┬────────────────────────────────────────────────────┤
 │        │                                                    │
 │ NAV    │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────┐ │
 │        │  │ Today    │ │ This     │ │ Projected│ │Active│ │
-│ Dash   │  │ $12.47   │ │ Month    │ │ EOM      │ │Agents│ │
-│ Agents │  │ +23% ▲   │ │ $284.30  │ │ $847 ⚠️  │ │ 7    │ │
-│ Sessions│ └──────────┘ └──────────┘ └──────────┘ └──────┘ │
-│ Alerts │                                                    │
-│ Budgets│  ┌────────────────────────────────────────────────┐│
-│ Forecast│ │          Cost Over Time (live chart)           ││
-│ Reports│  │  ═══════════════════╗                          ││
-│ Team   │  │                     ║ ← live cursor            ││
-│ Settings│ └────────────────────────────────────────────────┘│
+│ MONITOR│  │ $12.47   │ │ Month    │ │ EOM      │ │Agents│ │
+│ ───────│  │ +23% ▲   │ │ $284.30  │ │ $847 ⚠️  │ │ 7    │ │
+│ Dash   │  └──────────┘ └──────────┘ └──────────┘ └──────┘ │
+│ Agents │                                                    │
+│ Alerts │  [Cost Over Time — live chart via WebSocket]       │
+│ Budgets│                                                    │
+│ Forecast│ [Cost by Agent] [Cost by Provider]                │
+│ Reports│                                                    │
+│ Team   │  [Recent Events — live feed, new events slide in]  │
 │        │                                                    │
-│        │  ┌─────────────────────┐ ┌────────────────────────┐│
-│        │  │ Cost by Agent       │ │ Cost by Provider       ││
-│        │  │ ████████ agent-1    │ │ ████████ OpenAI 67%    ││
-│        │  │ ████ agent-2        │ │ ███ Anthropic 28%      ││
-│        │  │ ██ agent-3          │ │ █ Google 5%            ││
-│        │  └─────────────────────┘ └────────────────────────┘│
+│ REPLAY │                                                    │
+│ ───────│                                                    │
+│ Sessions│                                                   │
 │        │                                                    │
-│        │  ┌────────────────────────────────────────────────┐│
-│        │  │ Recent Events (live feed)                      ││
-│        │  │ 14:23:01  agent-1  gpt-4o     $0.034  ✓       ││
-│        │  │ 14:22:58  agent-2  claude-s4  $0.021  ✓       ││
-│        │  │ 14:22:45  agent-1  gpt-4o     $0.028  ✓       ││
-│        │  │ ← new events slide in from top                 ││
-│        │  └────────────────────────────────────────────────┘│
+│ PROTECT│                                                    │
+│ ───────│                                                    │
+│ Guards │                                                    │
+│ PII    │                                                    │
+│ Violat.│                                                    │
+│        │                                                    │
+│ ───────│                                                    │
+│ Audit  │                                                    │
+│ Settings│                                                   │
 └────────┴────────────────────────────────────────────────────┘
 ```
 
+### Sidebar navigation
+- Sections groupées par module : MONITOR / REPLAY / PROTECT
+- Badge sur chaque section avec le module requis (pour upsell)
+- Items grisés si le plan ne donne pas accès au module → clic = upsell modal
+
 ### Comportement temps réel
-- La connexion WebSocket s'établit au chargement du dashboard layout
-- Chaque nouvel event apparaît dans le live feed avec une animation slide-in
-- Les graphiques se mettent à jour en temps réel (pas de refresh)
-- Les KPI cards (Today, This Month) s'incrémentent à chaque event
-- Le projected EOM se recalcule côté client à chaque event (approximation rapide), le recalcul précis est fait par Celery toutes les heures
-- Si la connexion WebSocket tombe → fallback polling toutes les 5s → reconnexion auto avec exponential backoff
+- WebSocket à la connexion du dashboard layout
+- Events dans le live feed avec animation slide-in
+- Graphiques se mettent à jour live (pas de refresh)
+- KPI cards s'incrémentent à chaque event
+- Si WS tombe → fallback polling 5s → reconnexion auto exponential backoff
 
-### Filtres disponibles
-- Date range : Today, Last 7 days, Last 30 days, Custom range
-- Agent : dropdown multi-select
-- Provider : dropdown multi-select
-- Model : dropdown multi-select
-- Team : dropdown (Team plan uniquement)
-
-### Règles métier
-- Le dashboard charge les données initiales via REST API puis switche en mode WebSocket pour les updates
-- Les graphiques affichent max 1000 points de données. Au-delà → agrégation automatique
-- Le live feed affiche les 50 derniers events. Scroll infini pour l'historique
-- Mobile : le layout passe en single column, les graphiques sont stackés
+### Filtres
+- Date range : Today, Last 7 days, Last 30 days, Custom
+- Agent, Provider, Model : dropdown multi-select
+- Team : dropdown (Team plan)
 
 ---
 
 ## 3. TRACKING (POST /v1/track)
 
-### User story
-En tant que dev, je veux tracker chaque appel API IA avec un minimum d'effort, pour avoir une visibilité granulaire sur mes coûts.
-
-### Payload SDK
-
-```python
-@track(
-    agent="my-agent",           # Requis — nom de l'agent
-    workflow="customer-support", # Optionnel — catégorie de workflow
-    session_id="ticket-123",    # Optionnel — grouper en session
-    user_label="user_456",      # Optionnel — attribuer à un end-user
-    team_label="backend-team",  # Optionnel — attribuer à une équipe
-    metadata={"version": "2.1"} # Optionnel — données custom
-)
-def call_openai(prompt):
-    response = openai.chat.completions.create(...)
-    return response
-```
-
-### Payload API directe
+### Payload complet
 
 ```json
 {
@@ -152,6 +114,12 @@ def call_openai(prompt):
     "output_tokens": 340,
     "cost_usd": 0.0234,
     "session_id": "ticket-123",
+    "step": 3,
+    "step_name": "classify",
+    "input_text": "Customer says: I need help with billing",
+    "output_text": "Category: billing_inquiry",
+    "status": "success",
+    "duration_ms": 450,
     "workflow": "customer-support",
     "user_label": "user_456",
     "team_label": "backend-team",
@@ -159,17 +127,21 @@ def call_openai(prompt):
 }
 ```
 
-### Calcul automatique du coût
-- Si `cost_usd` est fourni → on l'utilise tel quel
-- Si `cost_usd` n'est pas fourni mais `model` + `input_tokens` + `output_tokens` sont fournis → calcul automatique via la pricing table
-- Si le modèle est inconnu → retourner l'event avec `cost_usd: null` et un warning dans la réponse
-- La pricing table est cachée dans Redis (TTL 1h) et mise à jour par un Celery beat task quotidien
+### Champs par module
+- **Monitor** : agent, model, provider, input_tokens, output_tokens, cost_usd, workflow, user_label, team_label, metadata
+- **Replay** : session_id, step, step_name, input_text, output_text, status, duration_ms
+- **Protect** : input_text, output_text (scannés pour PII et guardrails)
 
-### Auto-création de l'agent
-- Si le `agent` name n'existe pas pour cette org → créer automatiquement
-- Pas d'erreur, pas de friction — le dev n'a pas besoin de pré-créer ses agents
-- Vérifier la limite d'agents du plan avant auto-création (Free = 1, Starter = 5, Pro/Team = illimité)
-- Si la limite est atteinte → retourner 403 avec un message clair : "Agent limit reached. Upgrade your plan to add more agents."
+### Règles métier
+- `agent` est le seul champ strictement requis
+- `provider` déduit du model name si non fourni (gpt-* → openai, claude-* → anthropic)
+- `cost_usd` calculé automatiquement si non fourni (model + tokens requis)
+- `session_id` est un string libre défini par le dev
+- `step` est un entier auto-incrémenté dans une session si non fourni
+- `input_text` / `output_text` : capturés UNIQUEMENT si le plan inclut Replay (Starter+). Si Free → ignorés silencieusement.
+- PII redaction appliquée automatiquement sur input_text/output_text avant stockage
+- Events immutables — pas de PUT, pas de DELETE
+- Auto-création agent si le nom n'existe pas (dans la limite du plan)
 
 ### Réponse
 
@@ -180,806 +152,588 @@ def call_openai(prompt):
     "cost_usd": 0.0234,
     "budget_remaining_usd": 47.23,
     "budget_status": "ok",
+    "guardrail_violations": [],
+    "pii_detected": ["email"],
     "warnings": []
 }
 ```
-
-### Règles métier
-- `agent` est le seul champ strictement requis
-- Si `provider` n'est pas fourni, il est déduit du `model` name (gpt-* → openai, claude-* → anthropic, gemini-* → google)
-- `session_id` est un string libre défini par le dev — on ne le génère jamais côté serveur
-- `metadata` est limité à 10 clés, chaque valeur max 500 caractères
-- Les events sont immutables — pas de PUT, pas de DELETE sur un event
-- Les events avec `tracked_at` dans le futur sont rejetés (400)
-- L'event est inséré même si le budget cap est en mode `alert_only`
-
-### Edge cases
-- Rate limit atteint → 429 avec header Retry-After
-- Budget cap freeze → 429 avec body `{"error": "budget_exceeded", "agent": "my-agent", "budget_max_usd": 50.0}`
-- Plan limit requêtes atteint → 429 avec body `{"error": "plan_limit_reached", "current": 100000, "max": 100000}`
-- API key invalide ou révoquée → 401
-- Payload invalide → 422 avec détail des erreurs de validation
 
 ---
 
 ## 4. AGENTS (CRUD)
 
-### User story
-En tant que dev, je veux voir la liste de mes agents, leur coût, et pouvoir les gérer, pour comprendre ce que chaque agent me coûte.
-
-### Liste des agents (/dashboard/agents)
-
-```
-┌────────────────────────────────────────────────────────────────┐
-│ Agent            │ Status │ Today   │ This Month │ Trend      │
-├──────────────────┼────────┼─────────┼────────────┼────────────┤
-│ support-agent    │ 🟢     │ $4.23   │ $127.50    │ +12% ▲     │
-│ classifier       │ 🟢     │ $1.87   │ $45.30     │ -5% ▼      │
-│ summarizer       │ 🟡     │ $8.91   │ $312.00    │ +89% ⚠️ ▲  │
-│ data-extractor   │ 🔴     │ $0.00   │ $23.10     │ frozen     │
-└────────────────────────────────────────────────────────────────┘
-```
-
-### Statuts agent
-- 🟢 Active : événements dans les 24 dernières heures
-- 🟡 Warning : anomalie détectée OU budget > 80%
-- 🔴 Frozen : budget cap atteint, auto-freeze activé
-- ⚫ Inactive : aucun événement depuis 7 jours
+### Statuts
+- 🟢 Active : events dans les 24h
+- 🟡 Warning : anomalie OU budget > 80% OU guardrail violation récente
+- 🔴 Frozen : kill switch activé (budget cap atteint)
+- ⚫ Inactive : aucun event depuis 7j
 
 ### Détail agent (/dashboard/agents/[id])
-- Graphique coût over time (filtrable par période)
-- Répartition par modèle (quel modèle cet agent utilise)
-- Répartition par session/workflow
-- KPI : coût moyen par requête, requêtes/jour, tokens/requête
-- Forecast : coût projeté de cet agent en fin de mois
-- Recommendations : suggestions d'optimisation spécifiques à cet agent
-- Budget cap : jauge visuelle si un cap est configuré
-- Derniers events : feed des 100 derniers events de cet agent
-
-### Règles métier
-- Un agent est auto-créé au premier event. Il peut ensuite être renommé ou désactivé dans le dashboard
-- Désactiver un agent ne supprime PAS les events historiques — il n'apparaît plus dans les dropdowns mais ses données restent
-- Un agent ne peut PAS être supprimé (soft delete uniquement via is_active = false)
-- Le nom de l'agent est unique par organization (case-insensitive)
-- Le trend est calculé en comparant la semaine en cours vs la semaine précédente
+- Coût over time, répartition par modèle, par session
+- Forecast spécifique à cet agent
+- Cost Autopilot recommendations
+- Budget cap jauge
+- Guardrail violations récentes
+- Sessions récentes (lien vers Replay)
+- Derniers 100 events
 
 ---
 
-## 5. SESSION / WORKFLOW COSTING
-
-### User story
-En tant que dev, je veux connaître le coût total d'un workflow complet (ex: un ticket de support de bout en bout), pour comprendre la rentabilité de mes features IA.
-
-### Vue sessions (/dashboard/sessions)
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ Session ID       │ Agents │ Events │ Total Cost │ Duration   │
-├──────────────────┼────────┼────────┼────────────┼────────────┤
-│ ticket-123       │ 3      │ 12     │ $0.47      │ 4m 23s     │
-│ ticket-124       │ 2      │ 8      │ $0.31      │ 2m 11s     │
-│ analysis-batch-7 │ 1      │ 340    │ $12.87     │ 1h 12m     │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Détail session
-- Timeline visuelle des events dans la session (quels agents, dans quel ordre)
-- Coût cumulé au fil du temps de la session
-- Breakdown par agent dans la session
-- Breakdown par modèle dans la session
-
-### Agrégation par workflow
-- Quand le champ `workflow` est utilisé, une vue agrégée est disponible :
-  - "customer-support" : 234 sessions, coût moyen $0.42, coût total $98.28
-  - "data-extraction" : 12 sessions, coût moyen $15.30, coût total $183.60
-- Permet de comparer la rentabilité entre workflows
-
-### Règles métier
-- Le `session_id` est défini par le dev côté SDK/API — on ne le génère jamais
-- Une session est "fermée" quand aucun event n'arrive pendant 30 minutes
-- La durée = temps entre le premier et le dernier event de la session
-- Les sessions sans `session_id` ne sont pas affichées dans cette vue (elles restent dans le feed events)
-- Plan requis : Pro+ pour la vue sessions, Free/Starter voient le session_id dans les events mais pas la vue agrégée
-
----
-
-## 6. ALERTES
-
-### User story
-En tant que dev, je veux être alerté quand mes coûts dépassent un seuil, pour réagir avant que la facture explose.
+## 5. ALERTES + SMART ALERTS
 
 ### Types d'alertes
 
-| Type | Description | Threshold | Plan minimum |
-|------|-------------|-----------|--------------|
-| cost_daily | Coût journalier dépasse X$ | Défini par user | Starter |
-| cost_weekly | Coût hebdomadaire dépasse X$ | Défini par user | Starter |
-| cost_monthly | Coût mensuel dépasse X$ | Défini par user | Starter |
-| requests_daily | Nombre de requêtes/jour dépasse X | Défini par user | Starter |
-| requests_hourly | Nombre de requêtes/heure dépasse X | Défini par user | Starter |
-| anomaly | Spike détecté automatiquement | Automatique (3σ) | Starter |
+| Type | Description | Plan |
+|------|-------------|------|
+| cost_daily / weekly / monthly | Seuil de coût | Starter+ |
+| requests_daily / hourly | Seuil de volume | Starter+ |
+| anomaly | Spike auto-détecté (3σ) | Starter+ |
+| error_rate | Taux d'erreur dépasse X% | Starter+ |
+| guardrail_violation | Violation de guardrail | Pro+ |
 
-### Configuration (/dashboard/alerts)
-- Formulaire : choisir le type, l'agent (ou tous), le seuil, le canal (email, Slack, both, webhook)
-- Pour Slack : entrer le webhook URL ou se connecter via Slack OAuth
-- Cooldown configurable : 15min, 30min, 1h, 4h, 24h (éviter le spam)
-- Toggle on/off par alerte
+### Smart Alert (Pro+)
+Quand une alerte se déclenche, un Celery task appelle Claude API pour diagnostiquer la cause probable et suggérer un fix.
 
-### Format des notifications
-
-**Email (Brevo) :**
+**Format notification Slack :**
 ```
-Subject: ⚠️ AgentCostGuard — Daily cost alert for "support-agent"
+🔴 *Smart Alert* — support-agent
+Cost today: *$23.47* (threshold: $20.00)
 
-Your agent "support-agent" has exceeded your daily cost threshold.
+*Diagnosis:* Step 4 ("generate_response") is using gpt-4o with avg 2400
+input tokens — 3x more than last week. A prompt change on March 12
+likely increased context length.
 
-Current: $23.47
-Threshold: $20.00
-Overage: $3.47 (+17.4%)
+*Suggested fix:* Switch step 4 to gpt-4o-mini for simple responses,
+or reduce prompt context to <800 tokens.
 
-→ View in dashboard: https://app.agentcostguard.io/dashboard/agents/uuid
-```
-
-**Slack :**
-```
-⚠️ *Cost Alert* — support-agent
-Current: *$23.47* | Threshold: $20.00 | Overage: +$3.47 (+17.4%)
-<https://app.agentcostguard.io/dashboard/agents/uuid|View in dashboard>
+🔁 <Replay step 4|https://app.agentshield.io/dashboard/sessions/xxx>
 ```
 
 ### Règles métier
-- Les alertes anomaly (type `anomaly`) sont créées automatiquement pour chaque agent dès le plan Starter — pas de configuration nécessaire
-- Le cooldown empêche de renvoyer la même alerte pendant la durée configurée
-- Si une alerte est triggered et que la valeur redescend sous le seuil, le cooldown se reset
-- Max 20 alert rules par org (Free: 0, Starter: 5, Pro: 20, Team: 20)
-- L'historique des alertes est conservé pendant la durée d'historique du plan (7j / 30j / 90j / 1an)
+- Smart Alerts sont async (Celery) — la notification basique part immédiatement, le diagnostic est ajouté en 10-30s
+- Max 20 alert rules par org
+- Cooldown configurable : 15min, 30min, 1h, 4h, 24h
+- L'historique inclut le diagnostic IA quand disponible
 
 ---
 
-## 7. ANOMALY DETECTION
+## 6. ANOMALY DETECTION
+
+### Fonctionnement identique au spec AgentCostGuard
+- Phase d'apprentissage 7 jours → baseline mean + stddev
+- z-score > 3 = spike, z < -2 = drop
+- Automatique pour tous les agents dès Starter, pas de config
+- Ajout AgentShield : anomaly detection sur error_rate aussi (pas juste coûts/volume)
+
+---
+
+## 7. COST FORECAST
+
+### Identique au spec AgentCostGuard
+- Linear regression sur coûts daily du mois
+- Recalcul Celery toutes les heures
+- Min 3 jours pour afficher
+- Intervalle de confiance ±15%
+- Banner sur le dashboard principal : "Projected: $847 by end of month"
+
+---
+
+## 8. BUDGET CAPS + KILL SWITCH
+
+### Identique au spec AgentCostGuard, avec ajout :
+- Kill switch = mode Freeze renommé pour AgentShield
+- Quand kill switch activé → l'agent passe en 🔴 Frozen
+- Le SDK lève `BudgetExceededError`
+- Lien direct vers Replay de la dernière session coûteuse dans la notification
+
+---
+
+## 9. COST AUTOPILOT (ex-Model Recommendations)
+
+### Fonctionnement identique, rebrandé "Cost Autopilot"
+- Celery task hebdomadaire par org
+- Analyse via Claude API
+- Recommandations chiffrées : "Switch to gpt-4o-mini → save $85/month"
+- Plan requis : Pro+
+- Ajout AgentShield : le link "Learn more" ouvre la session Replay qui montre les appels coûteux
+
+---
+
+# MODULE REPLAY
+
+## 10. SESSIONS
 
 ### User story
-En tant que dev, je veux être alerté automatiquement quand un agent a un comportement anormal, sans avoir à configurer des seuils manuellement.
+En tant que dev, je veux voir exactement ce que mon agent a fait step by step dans une session, pour debugger les problèmes rapidement.
 
-### Fonctionnement
-
-```
-Phase d'apprentissage (7 premiers jours) :
-    → Collecter les données horaires par agent
-    → Calculer mean + stddev par (agent, heure du jour, jour de la semaine)
-    → Pas d'alerte pendant cette phase
-
-Phase active (après 7 jours) :
-    → À chaque event, comparer le volume horaire actuel à la baseline
-    → z-score = (valeur_actuelle - mean) / stddev
-    → Si z > 3 → ANOMALIE (spike)
-    → Si z < -2 → ANOMALIE (drop soudain — agent potentiellement cassé)
-```
-
-### Notification anomalie
+### Liste sessions (/dashboard/sessions)
 
 ```
-🔴 *Anomaly Detected* — support-agent
-Requests this hour: *847* (normal: ~120 ±35)
-Cost this hour: *$34.21* (normal: ~$4.80)
-This is *7.2x* above normal for Tuesday 2PM.
-
-Possible causes:
-• Agent looping on an edge case
-• Unexpected traffic spike
-• Prompt change causing longer outputs
-
-→ View in dashboard
+┌──────────────────────────────────────────────────────────────────┐
+│ Sessions                          [Filter] [Date range] [Status]│
+│                                                                  │
+│ ┌──────────┬────────┬──────┬──────────┬──────────┬─────────────┐│
+│ │ Session  │ Agents │ Steps│ Cost     │ Duration │ Status      ││
+│ ├──────────┼────────┼──────┼──────────┼──────────┼─────────────┤│
+│ │ ticket-  │ 3      │ 12   │ $0.47    │ 4m 23s   │ ✅ success  ││
+│ │ 123      │        │      │          │          │             ││
+│ │ ticket-  │ 2      │ 8    │ $0.31    │ 2m 11s   │ ✅ success  ││
+│ │ 124      │        │      │          │          │             ││
+│ │ batch-7  │ 1      │ 340  │ $12.87   │ 1h 12m   │ ❌ error    ││
+│ │          │        │      │          │          │ (step 287)  ││
+│ └──────────┴────────┴──────┴──────────┴──────────┴─────────────┘│
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### Dashboard : anomaly timeline
-- Timeline qui montre les spikes détectés sur les 30 derniers jours
-- Chaque anomalie est cliquable → détail de l'heure avec les events
-- Code couleur : rouge = spike coût, orange = spike volume, bleu = drop
+### Filtres sessions
+- Date range
+- Agent
+- Status : success, error, partial, running
+- Coût min/max
+- Search par session_id
+
+---
+
+## 11. SESSION TIMELINE (Replay core)
+
+### Vue détail (/dashboard/sessions/[id])
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ Session: ticket-123                        [Share] [Export JSON] │
+│ Status: ✅ Success | Cost: $0.47 | Duration: 4m 23s | 12 steps  │
+│                                                                  │
+│ ┌────────────────────────────────────────────────────────────┐   │
+│ │ TIMELINE                                                   │   │
+│ │                                                            │   │
+│ │  Step 1 ● ──── Step 2 ● ──── Step 3 ● ──── ... ── Step 12│   │
+│ │  classify    retrieve     generate          respond        │   │
+│ │  $0.01       $0.02        $0.18             $0.03          │   │
+│ │  gpt-4o-mini gpt-4o-mini  gpt-4o ⚠️        gpt-4o-mini   │   │
+│ │  120ms       340ms        2.1s              180ms          │   │
+│ └────────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│ ┌─ Step 3 (selected) ───────────────────────────────────────┐   │
+│ │ Agent: responder | Model: gpt-4o | Cost: $0.18 | 2.1s    │   │
+│ │                                                            │   │
+│ │ INPUT:                                                     │   │
+│ │ "Customer says: I need help with my billing. My email is   │   │
+│ │ [REDACTED:email] and my card ending in [REDACTED:cc]..."   │   │
+│ │                                                            │   │
+│ │ OUTPUT:                                                    │   │
+│ │ "I'll help you with your billing inquiry. I can see your   │   │
+│ │ account associated with [REDACTED:email]..."               │   │
+│ │                                                            │   │
+│ │ Tokens: 1250 in / 340 out | PII detected: email, cc       │   │
+│ │ 💡 Cost Autopilot: "This step could use gpt-4o-mini        │   │
+│ │    (save $0.14/call)"                                      │   │
+│ └────────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Interactions timeline
+- Clic sur un step → détail s'ouvre en dessous
+- Hover sur un step → tooltip avec coût + model + duration
+- Steps en erreur → bordure rouge + icône ❌
+- Steps avec guardrail violation → bordure orange + icône ⚠️
+- Steps avec PII détecté → badge "PII" discret
+- Zoom sur une section de la timeline (drag to select)
 
 ### Règles métier
-- L'anomaly detection est automatique pour tous les agents dès le plan Starter
-- Pas de configuration requise — ça marche out of the box
-- La baseline se met à jour en continu (exponential moving average, α = 0.1)
-- Un agent avec moins de 100 events total n'a pas encore de baseline fiable → pas d'alerte anomaly
-- Les anomalies sont différenciées des alertes manuelles dans l'historique
-- Le z-score threshold est fixe (3σ pour spike, -2σ pour drop) — pas configurable par l'utilisateur pour garder la simplicité
+- Plan requis : Starter+ (Replay)
+- Les inputs/outputs affichés sont TOUJOURS la version redacted (sauf si store_original=true ET l'user a le rôle owner/admin)
+- Une session avec 0 steps → "No steps recorded. Make sure you pass session_id and step to the SDK."
+- Sessions avec plus de 500 steps → pagination (50 steps par page) avec timeline scrollable
+- La timeline est ordonnée par `step` puis par `tracked_at`
+- Sessions "running" (dernier event < 30min) → animation pulse sur le dernier step
 
 ---
 
-## 8. COST FORECAST
+## 12. PARTAGE DE SESSION
 
 ### User story
-En tant que dev ou PM, je veux voir la projection de mes coûts de fin de mois, pour anticiper ma facture et ajuster si nécessaire.
+En tant que dev, je veux partager une session de replay avec un collègue via une URL, pour debugger ensemble.
 
-### Vue forecast (/dashboard/forecast)
+### Flow
+1. Clic sur [Share] dans la vue session
+2. Modal : "Generate a shareable link" + option d'expiration (1h, 24h, 7j, never)
+3. Génération d'un `share_token` unique
+4. URL : `https://app.agentshield.io/share/{share_token}`
+5. La page /share/[token] affiche la timeline en read-only, sans auth
+6. PII toujours redacted dans la vue partagée (même si store_original=true)
+
+### Règles métier
+- Plan requis : Pro+
+- Max 50 liens de partage actifs par org
+- Les liens expirés sont nettoyés par Celery (daily)
+- Le share_token est un UUID + 8 chars aléatoires (non prédictible)
+- La vue partagée n'a PAS accès au reste du dashboard — uniquement la session
+- Pas de données sensibles dans l'URL (pas de session_id, pas d'org_id)
+
+---
+
+## 13. COMPARAISON DE SESSIONS
+
+### User story
+En tant que dev, je veux comparer deux sessions côte à côte, pour comprendre pourquoi l'une a coûté plus cher ou a échoué.
+
+### Vue
+- Sélectionner 2 sessions dans la liste → bouton "Compare"
+- Vue split-screen : timeline gauche / timeline droite
+- Highlight des différences : steps manquants, coûts divergents, modèles différents
+- KPI comparison : coût total, durée, nb steps, error rate
+
+### Règles métier
+- Plan requis : Pro+
+- Uniquement 2 sessions à la fois
+- Les sessions doivent appartenir à la même org
+
+---
+
+# MODULE PROTECT
+
+## 14. GUARDRAILS CONFIGURABLES
+
+### User story
+En tant que responsable IA, je veux définir des règles qui empêchent mes agents de répondre à certains sujets ou d'utiliser certains mots, pour protéger la réputation de mon entreprise.
+
+### Types de guardrails
+
+| Type | Config | Exemple |
+|------|--------|---------|
+| keyword | Liste de mots interdits | ["competitor_name", "lawsuit", "internal_only"] |
+| topic | Catégorie de sujets | ["politics", "religion", "adult_content"] |
+| regex | Pattern custom | `\b(password|secret|api_key)\b` |
+| category | Liste noire pré-définie | ["hate_speech", "self_harm", "illegal"] |
+
+### Actions par guardrail
+
+| Action | Comportement |
+|--------|-------------|
+| log | L'event est stocké normalement. La violation est loggée. Notification envoyée. |
+| redact | Le contenu matché est remplacé par [BLOCKED:rule_name]. L'event est stocké. |
+| block | L'event est rejeté (403). Le SDK lève GuardrailBlockedError. |
+
+### Configuration (/dashboard/guardrails)
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
+│ Guardrails                                       [+ New Rule]│
 │                                                              │
-│  Projected End-of-Month Cost                                 │
-│                                                              │
-│  ████████████████████████████░░░░░░░░░░  $847                │
-│  ├── Current: $284 ──────────┤           ± $127              │
-│  │                           │           (confidence range)  │
-│                              │                               │
-│  11 days elapsed             19 days remaining               │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ Forecast chart                                          │ │
-│  │ ═══════════════╗                                        │ │
-│  │ actual data    ║  ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ projected          │ │
-│  │                ║ ╱                  ╲ confidence zone    │ │
-│  │                ╚╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌                  │ │
-│  │ Mar 1                              Mar 31               │ │
-│  └─────────────────────────────────────────────────────────┘ │
-│                                                              │
-│  Breakdown by agent:                                         │
-│  support-agent    $340 projected  (40% of total)             │
-│  summarizer       $290 projected  (34% of total)  ⚠️ +89%   │
-│  classifier       $130 projected  (15% of total)             │
-│  others           $87  projected  (11% of total)             │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Forecast banner (affiché sur le dashboard principal)
-- Toujours visible en haut : "Projected: $847 by end of month"
-- Code couleur : vert (sous budget), orange (>80% budget), rouge (>100% budget)
-- Clickable → va vers /dashboard/forecast
-
-### Calcul
-- Méthode : linear regression sur les coûts daily du mois en cours
-- Minimum 3 jours de données pour afficher une projection
-- Intervalle de confiance : ±15% (ajusté par la variance observée)
-- Recalculé par Celery toutes les heures
-- Affinement : pondération plus forte sur les 7 derniers jours (trend récent)
-
-### Règles métier
-- Disponible dès le plan Starter
-- Si le mois vient de commencer (< 3 jours) → afficher "Not enough data yet" au lieu d'une projection peu fiable
-- La projection par agent est calculée indépendamment pour chaque agent
-- Si un agent est frozen (budget cap), son forecast reste au niveau actuel (il ne va plus dépenser)
-- Le forecast tient compte des weekends si le pattern historique montre moins d'activité le weekend
-
----
-
-## 9. BUDGET CAPS
-
-### User story
-En tant que dev, je veux définir un budget maximum par agent, pour être protégé automatiquement contre les dépassements.
-
-### Configuration (/dashboard/budgets)
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ Agent            │ Budget    │ Period  │ Usage     │ Action   │
-├──────────────────┼───────────┼─────────┼───────────┼──────────┤
-│ support-agent    │ $50/month │ Monthly │ ████░ 76% │ Freeze   │
-│ summarizer       │ $20/day   │ Daily   │ ██░░ 45%  │ Freeze   │
-│ classifier       │ $100/week │ Weekly  │ █░░░ 23%  │ Alert    │
-│ [All agents]     │ $500/month│ Monthly │ ███░ 57%  │ Freeze   │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Actions quand le budget est atteint
-
-**Mode Freeze (défaut) :**
-- Le SDK reçoit une réponse 429 `BudgetExceededError`
-- L'agent passe en statut 🔴 Frozen sur le dashboard
-- Une notification est envoyée (email + Slack)
-- Un event WebSocket `budget_frozen` est publié
-- Les appels sont bloqués jusqu'à : reset du period OU augmentation manuelle du budget
-
-**Mode Alert Only :**
-- L'event est quand même enregistré (pas de blocage)
-- Une notification est envoyée
-- L'agent passe en statut 🟡 Warning
-- Le dashboard affiche un banner d'avertissement
-
-### SDK behavior
-
-```python
-from agentcostguard import track, set_budget, BudgetExceededError
-
-set_budget(agent="my-agent", max_usd=50.0, period="monthly")
-
-@track(agent="my-agent")
-def call_openai(prompt):
-    response = openai.chat.completions.create(...)
-    return response
-
-# Le dev peut catcher l'erreur
-try:
-    call_openai("Hello")
-except BudgetExceededError as e:
-    print(f"Budget exceeded: {e.current_usd}/{e.max_usd}")
-    # Fallback logic : utiliser un modèle moins cher, queue pour plus tard, etc.
-```
-
-### Jauge visuelle (BudgetGauge component)
-- 0-60% : barre verte
-- 60-80% : barre orange
-- 80-100% : barre rouge
-- 100%+ : barre rouge clignotante + icône freeze si mode freeze
-
-### Règles métier
-- Plan requis : Pro+ (Free et Starter n'ont pas les budget caps)
-- Un budget cap peut être par agent OU global (tous les agents de l'org)
-- Les périodes sont : daily (reset à minuit UTC), weekly (reset lundi minuit UTC), monthly (reset le 1er minuit UTC)
-- Le counter est dans Redis (atomique) et synchronisé avec la DB toutes les 5 minutes
-- Si Redis est down → le budget check est skippé (fail open, pas fail close — on ne bloque jamais le business du client à cause de notre infra)
-- Max 50 budget caps par org
-- Un agent peut avoir un cap daily ET un cap monthly (les deux sont vérifiés)
-
----
-
-## 10. MODEL RECOMMENDATIONS
-
-### User story
-En tant que dev, je veux savoir si je peux utiliser un modèle moins cher sans sacrifier la qualité, pour réduire mes coûts automatiquement.
-
-### Génération des recommandations
-
-```
-Celery task (hebdomadaire par org) :
-    │
-    ├── 1. Analyser les events des 7 derniers jours
-    │
-    ├── 2. Pour chaque agent, identifier :
-    │      → Le modèle le plus utilisé
-    │      → Le coût moyen par requête
-    │      → Le nombre moyen de tokens (input + output)
-    │
-    ├── 3. Appel Claude API avec le contexte :
-    │      "Agent 'support-agent' uses gpt-4o for 89% of calls.
-    │       Average input: 450 tokens, average output: 120 tokens.
-    │       Cost: $0.034/call, $127.50/month.
-    │       Suggest cheaper alternatives with estimated savings."
-    │
-    ├── 4. Parser la réponse structurée
-    │
-    └── 5. Stocker les recommandations (cache Redis 7j)
-```
-
-### Affichage (RecommendationCard)
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ 💡 Recommendation for support-agent                          │
-│                                                              │
-│ Switch from gpt-4o to gpt-4o-mini for simple classification │
-│ calls (68% of your requests).                                │
-│                                                              │
-│ Estimated savings: $85/month (-67%)                          │
-│                                                              │
-│ Current: gpt-4o → $0.034/call                                │
-│ Suggested: gpt-4o-mini → $0.011/call                         │
-│                                                              │
-│ [Dismiss]  [Learn more]                                      │
+│ Name              │ Type    │ Agents  │ Action │ Violations  │
+│ No competitors    │ keyword │ All     │ block  │ 3 this week │
+│ No PII in output  │ regex   │ support │ redact │ 12 today    │
+│ Safe topics only  │ topic   │ chatbot │ log    │ 0           │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ### Règles métier
 - Plan requis : Pro+
-- Généré automatiquement une fois par semaine par Celery
-- Max 3 recommandations actives par agent
-- Le dev peut "Dismiss" une recommandation (elle ne réapparaît pas pour cet agent/modèle combo)
-- Les recommandations ne touchent JAMAIS au code du dev — c'est informatif uniquement
-- On ne recommande jamais un modèle d'un provider différent (on reste dans le même provider pour éviter les changements de code)
-- Si un agent a moins de 50 events dans la semaine → pas de recommandation (pas assez de données)
+- Max 30 guardrail rules par org
+- Les guardrails sont évalués dans l'ordre de création
+- Un event peut matcher plusieurs guardrails — toutes les violations sont loggées
+- Si un event matche un guardrail "block" ET un guardrail "log" → block gagne
+- Les guardrails s'appliquent sur input_text ET output_text
+- Les rules "topic" utilisent une classification par mots-clés groupés (pas de ML) pour la V1
+- Latence max du check : 5ms (rules cached dans Redis)
 
 ---
 
-## 11. WEBHOOKS SORTANTS
+## 15. PII REDACTION
 
 ### User story
-En tant que dev, je veux recevoir des événements AgentCostGuard dans mes propres outils (Zapier, custom backend, etc.), pour automatiser mes workflows.
+En tant que responsable compliance, je veux que les données personnelles soient automatiquement masquées dans les traces, pour être conforme GDPR.
 
-### Configuration (/dashboard/settings → Webhooks)
-- Ajouter une URL endpoint
-- Sélectionner les événements à recevoir :
-  - `event.tracked` — chaque event tracké
-  - `alert.fired` — alerte déclenchée
-  - `anomaly.detected` — anomalie détectée
-  - `budget.warning` — budget > 80%
-  - `budget.exceeded` — budget cap atteint
-  - `agent.frozen` — agent auto-freeze
-- Un secret est auto-généré pour signer les payloads (HMAC SHA-256)
+### Patterns supportés (V1)
 
-### Payload webhook
+| Pattern | Exemple | Remplacement |
+|---------|---------|-------------|
+| email | john@example.com | [REDACTED:email] |
+| phone | +33 6 12 34 56 78 | [REDACTED:phone] |
+| credit_card | 4111-1111-1111-1111 | [REDACTED:cc] |
+| ssn | 123-45-6789 | [REDACTED:ssn] |
+| ip_address | 192.168.1.1 | [REDACTED:ip] |
+| custom | (regex défini par l'org) | [REDACTED:custom_name] |
 
-```json
-{
-    "id": "wh_uuid",
-    "type": "alert.fired",
-    "created_at": "2026-03-15T14:23:01Z",
-    "data": {
-        "alert_rule_id": "uuid",
-        "agent": "support-agent",
-        "metric": "cost_daily",
-        "current_value": 23.47,
-        "threshold": 20.00
-    }
-}
+### Configuration (/dashboard/pii)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ PII Redaction                                                │
+│                                                              │
+│ ✅ Enabled (default)                                         │
+│                                                              │
+│ Active patterns:                                             │
+│ ☑ Email addresses                                            │
+│ ☑ Phone numbers                                              │
+│ ☑ Credit card numbers                                        │
+│ ☑ Social Security Numbers                                    │
+│ ☐ IP addresses                                               │
+│                                                              │
+│ Action: [Redact ▼]  (redact / hash / log only)              │
+│                                                              │
+│ Store original content: [No ▼]                               │
+│ ⚠️ If enabled, original unredacted content is stored.        │
+│    Only owners and admins can view it.                        │
+│                                                              │
+│ Custom patterns:                                [+ Add]      │
+│ Name: "employee_id" | Pattern: EMP-\d{6}                    │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Header de signature
-```
-X-ACG-Signature: sha256=abc123...
-X-ACG-Timestamp: 1711234567
-```
+### Règles métier
+- PII redaction est **activée par défaut** pour toute nouvelle org (privacy by default)
+- Plan requis : Pro+ pour la configuration. Free/Starter ont la redaction activée mais pas configurable.
+- `store_original=false` par défaut — les textes bruts ne sont JAMAIS stockés sauf opt-in explicite
+- La redaction se fait en 2 passes : SDK (avant envoi) + serveur (avant stockage)
+- Les custom patterns sont limités à 10 par org
+- Le Replay affiche TOUJOURS la version redacted — sauf pour owner/admin avec store_original=true
 
-### Retry logic
-- Tentative 1 : immédiat
-- Tentative 2 : après 1 minute
-- Tentative 3 : après 5 minutes
-- Tentative 4 : après 30 minutes
-- Tentative 5 : après 2 heures
-- Après 5 échecs → webhook marqué comme failed, notification email au user
+---
+
+## 16. VIOLATIONS
+
+### Vue violations (/dashboard/violations)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Violations                            [Filter] [Date range]  │
+│                                                              │
+│ Time        │ Agent    │ Rule          │ Action  │ Session   │
+│ 14:23:01    │ chatbot  │ No competitors│ blocked │ sess-456  │
+│ 14:20:15    │ support  │ PII in output │ redacted│ sess-455  │
+│ 13:55:03    │ chatbot  │ Safe topics   │ logged  │ sess-451  │
+│                                                              │
+│ [Click any row → opens the Replay session at the violation]  │
+└──────────────────────────────────────────────────────────────┘
+```
 
 ### Règles métier
 - Plan requis : Pro+
-- Max 5 webhook endpoints par org
-- Timeout par requête : 10 secondes
-- Les webhooks `event.tracked` sont batchés (max 1 envoi/10 secondes pour éviter le flood)
-- Le dashboard affiche l'historique des livraisons avec le status code
-- Le dev peut tester un webhook avec un "Send test" button
-
----
-
-## 12. TEAM COST ATTRIBUTION
-
-### User story
-En tant que CTO, je veux voir combien chaque équipe dépense en IA, pour allouer les budgets et justifier les coûts auprès des investisseurs.
-
-### Vue team (/dashboard/team)
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ Team Attribution — March 2026                                 │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ Pie chart : cost by team                                │ │
-│  │  Backend 45% | ML Team 32% | Product 18% | Other 5%    │ │
-│  └─────────────────────────────────────────────────────────┘ │
-│                                                              │
-│ ┌──────────┬──────────┬──────────┬──────────┬──────────────┐ │
-│ │ Team     │ Members  │ Agents   │ Cost MTD │ vs Last Month│ │
-│ ├──────────┼──────────┼──────────┼──────────┼──────────────┤ │
-│ │ Backend  │ 4        │ 5        │ $128.30  │ +12% ▲       │ │
-│ │ ML Team  │ 3        │ 8        │ $91.20   │ -8% ▼        │ │
-│ │ Product  │ 2        │ 2        │ $51.40   │ +45% ▲ ⚠️    │ │
-│ │ Other    │ 1        │ 1        │ $14.10   │ —            │ │
-│ └──────────┴──────────┴──────────┴──────────┴──────────────┘ │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Comment attribuer un coût à une team
-- Via le `team_label` dans l'event (SDK ou API)
-- Via le `team_label` sur le user (tous ses events héritent)
-- Via l'agent : un agent peut être assigné à une team dans le dashboard
-- Priorité : event.team_label > user.team_label > agent.team (fallback)
-
-### Règles métier
-- Plan requis : Team
-- Les team labels sont des strings libres, pas un système rigide
-- Le dashboard agrège par team_label
-- Si aucun team_label → catégorie "Unassigned"
-- Export CSV disponible pour le reporting financier
-
----
-
-## 13. AUDIT LOG
-
-### User story
-En tant qu'admin d'une équipe, je veux savoir qui a fait quoi sur AgentCostGuard, pour la traçabilité et la sécurité.
-
-### Vue audit (/dashboard/audit)
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ Audit Log                                    [Filter] [Export]│
-│                                                              │
-│ Mar 15, 14:23  alice@team.com   Created alert rule           │
-│                                 "daily-cost-alert" on agent  │
-│                                 support-agent                │
-│                                                              │
-│ Mar 15, 11:02  bob@team.com     Revoked API key              │
-│                                 "production-key" (acg_live_  │
-│                                 xk4f)                        │
-│                                                              │
-│ Mar 14, 18:45  alice@team.com   Changed plan from Pro to     │
-│                                 Team                         │
-│                                                              │
-│ Mar 14, 16:30  bob@team.com     Updated budget cap on        │
-│                                 summarizer: $20/day → $35/day│
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Actions loggées
-- API key created / revoked
-- Alert rule created / updated / deleted
-- Budget cap created / updated / deleted
-- Agent renamed / deactivated
-- Webhook endpoint created / updated / deleted
-- Plan changed (upgrade / downgrade)
-- Team member invited / removed / role changed
-- Settings updated (Slack connection, email preferences)
-
-### Règles métier
-- Plan requis : Team
-- L'audit log est immutable — pas de suppression
-- Rétention : 1 an (même durée que l'historique Team)
-- Chaque entrée inclut : user, action, resource, timestamp, IP address
-- Filtrable par user, action type, date range
+- Chaque violation est liée à un event et une session
+- Clic sur une violation → ouvre le Replay à ce step exact
+- Historique conservé selon la durée du plan
 - Exportable en CSV
 
 ---
 
-## 14. SLACK BOT INTERACTIF
+## 17. KILL SWITCH
 
 ### User story
-En tant que dev, je veux consulter mes coûts IA directement dans Slack, sans ouvrir le dashboard, pour rester dans mon workflow.
-
-### Slash commands
-
-```
-/costguard status
-→ Résumé : Today $12.47 | Month $284.30 | Projected $847
-→ Top 3 agents par coût today
-→ Alertes actives
-
-/costguard agent support-agent
-→ Coût today, this week, this month
-→ Trend vs semaine dernière
-→ Budget cap status si configuré
-→ Dernière anomalie si détectée
-
-/costguard forecast
-→ Projected EOM : $847 (±$127)
-→ Top agent contributor
-→ Lien vers le dashboard forecast
-
-/costguard help
-→ Liste des commandes disponibles
-```
-
-### Installation
-- Slack OAuth flow depuis /dashboard/settings → Integrations → Slack
-- Permissions requises : commands, chat:write, incoming-webhook
-- Le bot s'installe dans le workspace Slack de l'utilisateur
-- Un channel par défaut est configuré pour les alertes
-
-### Format des réponses Slack
-- Block Kit pour un rendu riche (pas du texte brut)
-- Boutons interactifs : "View in dashboard", "Mute alert"
-- Les réponses aux slash commands sont ephemeral (seul l'utilisateur qui tape la commande voit la réponse)
-
-### Règles métier
-- Plan requis : Team pour le bot interactif (slash commands)
-- Les alertes simples via webhook Slack restent disponibles dès Starter
-- Max 1 workspace Slack par organization
-- Le bot ne peut PAS modifier des settings (read-only) — sécurité
-- Rate limit : 1 slash command par user par 10 secondes
-
----
-
-## 15. RAPPORTS PDF
-
-### User story
-En tant que CTO ou PM, je veux générer un rapport PDF professionnel de mes coûts IA, pour le partager avec mon équipe ou mes investisseurs.
-
-### Contenu du rapport
-- Page de garde : logo AgentCostGuard + nom de l'org + période
-- Executive summary : coût total, nb agents, nb requêtes, trend
-- Graphique : coût over time sur la période
-- Table : coût par agent (top 10)
-- Table : coût par provider/modèle
-- Table : coût par team (si Team plan)
-- Anomalies détectées pendant la période
-- Recommandations actives
-- Footer : "Generated by AgentCostGuard — agentcostguard.io"
-
-### Génération
-- Depuis /dashboard/reports : choisir la période (last 7 days, last 30 days, this month, custom)
-- La génération est async (Celery task) — le user voit "Generating your report..."
-- Quand prêt → notification + lien de téléchargement
-- Le PDF est stocké temporairement (7 jours) puis supprimé
-
-### Règles métier
-- Plan requis : Team
-- Max 10 rapports générés par mois
-- La génération prend max 30 secondes
-- Le PDF inclut le branding AgentCostGuard (watermark sur plan Free si jamais on ouvre cette feature)
-- Pas de données sensibles dans le PDF (pas de clés API, pas de prompts)
-
----
-
-## 16. DASHBOARD PERSONNALISABLE
-
-### User story
-En tant que power user, je veux organiser mon dashboard selon mes priorités, pour voir en premier ce qui compte pour moi.
+En tant que dev, je veux pouvoir couper un agent immédiatement quand quelque chose ne va pas, sans toucher au code.
 
 ### Fonctionnement
-- Grid de widgets drag-and-drop
-- Widgets disponibles : KPI cards, Cost Over Time, Cost by Agent, Cost by Provider, Cost by Model, Forecast chart, Anomaly timeline, Budget gauges, Recent events feed, Session costs, Team attribution
-- L'utilisateur peut : ajouter/supprimer des widgets, les redimensionner, les réordonner
-- La configuration est sauvegardée par user (pas par org)
+- Toggle dans la vue agent : [Kill Switch: OFF / ON]
+- Quand activé → l'agent passe en 🔴 Frozen
+- Tous les appels SDK pour cet agent reçoivent 429 `AgentFrozenError`
+- Le kill switch est indépendant du budget cap (peut être activé manuellement)
+- Désactivation manuelle uniquement (pas de reset automatique)
+
+### Règles métier
+- Plan requis : Pro+
+- Le kill switch est immédiat (Redis flag, < 1ms)
+- L'activation/désactivation est loggée dans l'audit log
+- Notification envoyée quand activé
+
+---
+
+# TRANSVERSAL
+
+## 18. WEBHOOKS SORTANTS
+
+### Événements disponibles
+- `event.tracked` — chaque event (batchable)
+- `alert.fired` — alerte déclenchée
+- `smart_alert.diagnosed` — diagnostic IA disponible
+- `anomaly.detected` — anomalie détectée
+- `budget.warning` — budget > 80%
+- `budget.exceeded` — kill switch auto
+- `agent.frozen` — agent frozen (kill switch manuel)
+- `session.completed` — session terminée (Replay)
+- `guardrail.violated` — violation de guardrail (Protect)
+- `pii.detected` — PII détecté (Protect)
+
+### Règles métier
+- Plan requis : Pro+
+- Max 5 endpoints par org
+- Signature HMAC SHA-256 (header X-AGS-Signature)
+- Retry : immédiat → 1min → 5min → 30min → 2h (5 tentatives)
+- Timeout 10s par requête
+
+---
+
+## 19. TEAM COST ATTRIBUTION
+
+### Identique au spec AgentCostGuard
+- team_label sur events, users, agents (priorité dans cet ordre)
+- Vue /dashboard/team avec pie chart + table par équipe
+- Plan requis : Team
+- Export CSV
+
+---
+
+## 20. AUDIT LOG
+
+### Actions loggées (ajouts AgentShield)
+- Tout ce qui était dans AgentCostGuard PLUS :
+- Guardrail rule created / updated / deleted
+- PII config updated
+- Kill switch activated / deactivated
+- Session shared / share revoked
+- Compliance export generated
 
 ### Règles métier
 - Plan requis : Team
-- La config par défaut est le dashboard standard (même pour Team)
-- Max 12 widgets sur le dashboard
-- Le layout est responsive : sur mobile, les widgets passent en single column dans l'ordre défini
-- Reset to default disponible en un clic
+- Immutable, rétention 1 an
+- Exportable CSV
 
 ---
 
-## 17. BILLING & PLANS
+## 21. SLACK BOT INTERACTIF
 
-### User story
-En tant que client, je veux gérer mon abonnement simplement, upgrader/downgrader, et voir mes factures.
+### Slash commands (ajouts AgentShield)
 
-### Flow Stripe
-- Signup → plan Free automatique (pas de Stripe customer créé)
-- Upgrade → Stripe Checkout session → paiement → webhook → activation plan
-- Downgrade → effectif à la fin de la période en cours
-- Annulation → downgrade vers Free à la fin de la période
-
-### Settings billing (/dashboard/settings → Billing)
-- Plan actuel + usage (agents, requêtes ce mois)
-- Bouton "Upgrade" / "Downgrade" / "Cancel"
-- Lien vers le Stripe Portal pour gérer la carte et les factures
-- Historique des factures (via Stripe Portal)
-
-### Gestion des limites au downgrade
-- Si l'utilisateur downgrade de Pro (agents illimités) à Starter (5 agents) et qu'il a 12 agents :
-  - Les 12 agents restent mais seuls les 5 plus récents sont actifs
-  - Les 7 autres passent en inactive
-  - Un message explique : "7 agents have been deactivated. Reactivate them by upgrading."
-- Les données historiques ne sont JAMAIS supprimées au downgrade
-- L'historique est limité selon le plan (7j/30j/90j/1an) — les données au-delà ne sont plus visibles mais pas supprimées physiquement (cleanup par Celery après 30 jours de grâce)
-
-### Webhooks Stripe à gérer
-- `checkout.session.completed` → activer le plan
-- `invoice.paid` → renouvellement OK
-- `invoice.payment_failed` → notifier le user, grace period 7 jours
-- `customer.subscription.updated` → upgrade/downgrade
-- `customer.subscription.deleted` → retour au Free
+```
+/shield status      → Résumé Monitor + dernières violations Protect
+/shield agent X     → Coût + sessions récentes + violations
+/shield session X   → Lien direct vers le Replay
+/shield violations  → 5 dernières violations
+/shield forecast    → Projected EOM
+/shield help        → Liste des commandes
+```
 
 ### Règles métier
-- Pas de trial — le plan Free remplace le trial
-- Les prix sont en EUR (€)
-- Paiement mensuel uniquement (pas d'annuel pour le moment)
-- Pas de remboursement automatique — gestion manuelle si nécessaire
-- Le plan est lié à l'organization, pas à l'utilisateur
+- Plan requis : Team pour le bot (slash commands)
+- Alertes simples via webhook Slack dès Starter
+- Réponses ephemeral (seul l'user voit)
+- Read-only (pas de modification depuis Slack)
 
 ---
 
-## 18. API KEYS
+## 22. RAPPORTS PDF
 
-### User story
-En tant que dev, je veux créer et gérer mes clés API pour intégrer le SDK.
-
-### Gestion (/dashboard/settings → API Keys)
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ API Keys                                          [+ New Key]│
-│                                                              │
-│ Name           │ Prefix      │ Last used       │ Status      │
-│ Default Key    │ acg_live_xk │ 2 minutes ago   │ 🟢 Active   │
-│ Staging Key    │ acg_live_m3 │ 3 days ago      │ 🟢 Active   │
-│ Old Key        │ acg_live_p9 │ Never           │ 🔴 Revoked  │
-│                │             │                 │ [Revoke]    │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Création d'une clé
-- L'utilisateur donne un nom à la clé
-- La clé complète est affichée UNE SEULE FOIS
-- Format : `acg_live_` + 32 caractères aléatoires (base62)
-- La clé est hashée (SHA-256) avant stockage en DB
-- Seul le prefix (`acg_live_` + 4 premiers chars) est stocké en clair pour identification
+### Contenu (ajouts AgentShield)
+- Tout ce qui était dans AgentCostGuard PLUS :
+- Top 5 sessions les plus coûteuses du mois (avec lien Replay)
+- Résumé des violations de guardrails
+- Résumé PII : nombre de redactions par type
+- Smart Alert digests : top 3 diagnostics du mois
 
 ### Règles métier
+- Plan requis : Team
+- Max 10 par mois
+- Génération async (Celery), max 30s
+
+---
+
+## 23. DASHBOARD PERSONNALISABLE
+
+### Widgets disponibles (ajouts AgentShield)
+- Tous les widgets Monitor PLUS :
+- Session feed (dernières sessions Replay)
+- Violation counter (Protect)
+- PII detection counter (Protect)
+- Error rate by agent
+
+### Règles métier
+- Plan requis : Team
+- Max 12 widgets, drag-and-drop
+- Config sauvegardée par user
+
+---
+
+## 24. BILLING & PLANS
+
+### Gestion des modules au changement de plan
+
+| Transition | Effet |
+|------------|-------|
+| Free → Starter | Replay activé. Sessions futures capturées. Pas de rétroactivité. |
+| Starter → Pro | Protect activé. Guardrails et PII configurables. |
+| Pro → Team | Multi-user, compliance, Slack bot, PDF, audit log. |
+| Pro → Starter (downgrade) | Protect désactivé. Guardrails conservés mais inactifs. Données Protect visibles en read-only. |
+| Starter → Free (downgrade) | Replay désactivé. Sessions conservées mais non visibles. |
+
+### Règles métier
+- Les données ne sont JAMAIS supprimées au downgrade
+- Les modules désactivés sont grisés dans la sidebar avec lien upsell
+- Le downgrade prend effet à la fin de la période
+- Stripe Checkout pour l'upgrade, Stripe Portal pour la gestion
+
+---
+
+## 25. API KEYS
+
+### Format
+- Prefix : `ags_live_` (AgentShield live)
+- 32 chars aléatoires base62
+- SHA-256 hash en DB
 - Max 5 clés actives par org
-- Une clé révoquée ne peut pas être réactivée
-- La révocation est immédiate (le cache Redis est invalidé)
-- Les clés n'ont pas d'expiration automatique (révocation manuelle uniquement)
-- La création/révocation est loggée dans l'audit log (Team plan)
 
 ---
 
-## 19. AUTHENTICATION
+## 26. AUTHENTICATION
 
-### User story
-En tant que dev, je veux m'inscrire et me connecter simplement, avec mon email ou mon compte Google.
-
-### Méthodes supportées
-- Email + password (Supabase Auth)
-- Google OAuth (Supabase Auth)
-
-### Flow inscription
-1. Choisir email ou Google
-2. Si email : vérification par magic link (pas de mot de passe au signup — passwordless)
-3. Création automatique de l'organization (slug = première partie de l'email)
-4. Redirect vers l'onboarding
-
-### Flow connexion
-1. Email + magic link OU Google OAuth
-2. Redirect vers /dashboard
-
-### Invitations (Team plan)
-- L'owner peut inviter des membres par email
-- L'invité reçoit un email avec un lien d'invitation
-- Au clic → signup/login → ajouté automatiquement à l'organization avec le rôle choisi
-- Rôles : owner (1 seul), admin (peut tout faire sauf supprimer l'org), member (lecture + track)
-
-### Règles métier
-- L'email est unique dans tout le système
-- Un user appartient à exactement 1 organization (pas de multi-org pour le moment)
-- Le magic link expire après 1 heure
-- 5 tentatives max par email par heure (anti-spam)
-- La session JWT expire après 7 jours (refresh token automatique)
+### Identique au spec AgentCostGuard
+- Email magic link + Google OAuth (Supabase Auth)
+- Invitations Team par email
+- Rôles : owner, admin, member
+- JWT 7 jours avec refresh
 
 ---
 
-## 20. LANDING PAGE
-
-### User story
-En tant que visiteur, je veux comprendre ce que fait AgentCostGuard en 10 secondes, pour décider si ça vaut le coup de m'inscrire.
+## 27. LANDING PAGE
 
 ### Structure
 
 ```
-[Nav] Logo — Features — Pricing — Docs — [Login] [Get Started Free]
+[Nav] Logo — Modules — Pricing — Docs — [Login] [Start Free]
 
 [Hero]
-Headline: "Stop overpaying for AI."
-Subheadline: "Track, alert, and optimize your AI API costs in real-time.
-              Setup in 2 minutes. No proxy. No BS."
+Headline: "Your AI agents are running blind."
+Subheadline: "Monitor costs. Replay every session. Protect with guardrails.
+              One SDK. One line of code. Full visibility."
 CTA: [Start Free — No credit card]
-Visual: Dashboard screenshot (dark mode, live data)
+Visual: Dashboard screenshot (dark mode, session replay visible)
 
-[Social proof]
-"Used by X developers tracking $Y in AI spending"
-
-[Features section — 6 cards]
-1. Real-time tracking — See every dollar as it's spent
-2. Smart alerts — Get notified before budgets blow up
-3. Anomaly detection — AI watches your AI spending
-4. Cost forecast — Know your bill before it arrives
-5. Budget protection — Auto-freeze when limits hit
-6. Model recommendations — Save money automatically
+[3 Module cards]
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│  📊 MONITOR  │ │  🔄 REPLAY   │ │  🛡️ PROTECT  │
+│              │ │              │ │              │
+│ Track costs  │ │ Debug step   │ │ Guardrails   │
+│ Smart alerts │ │ by step      │ │ PII redaction│
+│ Forecast     │ │ Share URL    │ │ Kill switch  │
+└──────────────┘ └──────────────┘ └──────────────┘
 
 [How it works — 3 steps]
-1. Install the SDK (code snippet)
-2. Track your first call (code snippet)
-3. See your costs live (dashboard screenshot)
+1. Install: pip install agentshield
+2. Add one line: @shield(agent="my-agent")
+3. See everything: costs, sessions, violations
+
+[Social proof]
+"Used by X teams monitoring Y agent sessions"
 
 [Pricing table]
-Free / Starter / Pro / Team
+Free / Starter €49 / Pro €99 / Team €199
 
-[FAQ]
-5-8 questions
+[Comparison table vs LangSmith / Helicone / Langfuse]
+
+[FAQ] 6-8 questions
 
 [Final CTA]
-"Your AI costs shouldn't be a surprise."
+"Your agents are running. Do you know what they're doing?"
 [Start Free — No credit card]
 
 [Footer]
-Links — Nova (@NovaShips) — Privacy — Terms
+Logo — @NovaShips — Privacy — Terms — Docs
 ```
 
 ### Règles métier
-- Dark mode uniquement (cohérent avec l'identité Nova)
-- Couleur signature : violet #7C3AED
-- Pas de stock photos — uniquement screenshots réels ou illustrations minimales
-- Les code snippets sont copiables (bouton copy)
-- La page doit se charger en < 2 secondes (Vercel Edge)
+- Dark mode uniquement, couleur violet #7C3AED
 - Mobile-first responsive
-- Plausible analytics sur les CTA (track: signup_click, pricing_click, docs_click)
+- < 2s load time (Vercel Edge)
+- Code snippets copiables
+- Plausible analytics sur CTA
 
 ---
 
