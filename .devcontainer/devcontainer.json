@@ -1,5 +1,5 @@
 {
-  "name": "AgentCostGuard-Dev",
+  "name": "AgentShield-Dev",
   "image": "mcr.microsoft.com/devcontainers/universal:2",
 
   "features": {
