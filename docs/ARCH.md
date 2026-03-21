@@ -1,4 +1,4 @@
-# ARCH.md — Architecture technique AgentCostGuard
+# ARCH.md — Architecture technique AgentShield
 
 > Ce fichier définit l'architecture complète du projet. Claude Code le lit avant toute tâche qui touche à la structure du code, aux endpoints, à la base de données, ou aux interactions entre services.
 > Cohérent avec : CONTEXT.md (source de vérité projet)
@@ -12,25 +12,38 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                        UTILISATEURS                             │
 │                                                                 │
-│   Développeur avec SDK Python    │    Développeur avec API      │
-│   pip install agentcostguard     │    POST /v1/track            │
-└──────────────┬───────────────────┴──────────────┬───────────────┘
-               │                                  │
-               ▼                                  ▼
+│   SDK Python         │  Callbacks          │  API directe       │
+│   @shield()          │  LangChain/CrewAI   │  POST /v1/track    │
+└──────────┬───────────┴──────────┬──────────┴──────────┬─────────┘
+           │                      │                     │
+           ▼                      ▼                     ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      API GATEWAY (FastAPI)                       │
-│                      api.agentcostguard.io                       │
+│                      api.agentshield.io                          │
 │                      Port 8000 — Railway                         │
 │                                                                  │
+│  ── MODULE MONITOR ──                                            │
 │  /v1/track           → Ingestion des événements de coût          │
 │  /v1/agents          → CRUD agents                               │
 │  /v1/analytics       → Données agrégées pour le dashboard        │
 │  /v1/alerts          → Gestion des seuils et alertes             │
-│  /v1/budgets         → Budget caps et auto-freeze                │
+│  /v1/budgets         → Budget caps et kill switch                │
 │  /v1/forecasts       → Projections de coûts                      │
-│  /v1/sessions        → Session/workflow costing                  │
-│  /v1/recommendations → Optimisations IA (Claude API)             │
+│  /v1/recommendations → Cost Autopilot (Claude API)               │
 │  /v1/reports         → Génération de rapports PDF                │
+│                                                                  │
+│  ── MODULE REPLAY ──                                             │
+│  /v1/sessions        → Liste et détail des sessions              │
+│  /v1/sessions/:id    → Timeline step-by-step                     │
+│  /v1/sessions/:id/share → Générer URL de partage                 │
+│  /v1/steps           → Détail d'un step individuel               │
+│                                                                  │
+│  ── MODULE PROTECT ──                                            │
+│  /v1/guardrails      → CRUD règles de protection                 │
+│  /v1/pii             → Config PII redaction                      │
+│  /v1/violations      → Historique des violations détectées        │
+│                                                                  │
+│  ── TRANSVERSAL ──                                               │
 │  /v1/billing         → Stripe webhooks + gestion abonnement      │
 │  /v1/auth            → Proxy vers Supabase Auth                  │
 │  /v1/api-keys        → Création / révocation des API keys        │
@@ -46,37 +59,52 @@
 │ Supabase  │ │   Redis    │ │Celery Workers │ │Services externes│
 │ PostgreSQL│ │ Cache +    │ │  Railway      │ │                 │
 │           │ │ Broker +   │ │               │ │ Stripe          │
-│ 14 tables │ │ Pub/Sub    │ │ Alerts        │ │ Brevo           │
-│ RLS activé│ │            │ │ Aggregation   │ │ Slack API       │
+│ 19 tables │ │ Pub/Sub    │ │ Alerts        │ │ Brevo           │
+│ RLS activé│ │            │ │ Smart Alerts  │ │ Slack API       │
 │           │ │ Rate limits│ │ Anomaly detect│ │ Claude API      │
 │           │ │ Cache prix │ │ Forecast calc │ │ Sentry          │
-│           │ │ WS pub/sub │ │ PDF reports   │ │ Plausible       │
-│           │ │ Budget ctrs│ │ Recommendations│ │                │
-│           │ │ Session agg│ │ Cleanup       │ │                 │
-│           │ │            │ │ Webhook dispatch││                │
+│           │ │ WS pub/sub │ │ Cost Autopilot│ │ Plausible       │
+│           │ │ Budget ctrs│ │ PDF reports   │ │                 │
+│           │ │ Session agg│ │ PII scan      │ │                 │
+│           │ │ Guardrail  │ │ Guardrail eval│ │                 │
+│           │ │ cache      │ │ Webhook disp. │ │                 │
+│           │ │            │ │ Cleanup       │ │                 │
 └───────────┘ └────────────┘ └───────────────┘ └─────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
 │                     FRONTEND (Next.js 14)                        │
-│                     app.agentcostguard.io                         │
-│                     Vercel                                        │
+│                     app.agentshield.io                            │
+│                     Vercel — Dark mode exclusivement              │
 │                                                                  │
-│  /                       → Landing page + pricing                │
-│  /login                  → Auth (Supabase)                       │
-│  /signup                 → Onboarding guidé interactif           │
-│  /dashboard              → Vue principale (coûts temps réel WS)  │
-│  /dashboard/agents       → Liste et détail par agent             │
-│  /dashboard/agents/[id]  → Détail agent + forecast + recomm.    │
-│  /dashboard/sessions     → Coût par session/workflow             │
-│  /dashboard/alerts       → Configuration seuils + anomaly rules  │
-│  /dashboard/budgets      → Budget caps par agent                 │
-│  /dashboard/forecast     → Projection fin de mois               │
-│  /dashboard/reports      → Rapports PDF                          │
-│  /dashboard/team         → Cost attribution par équipe (Team)    │
-│  /dashboard/audit        → Audit log (Team)                      │
-│  /dashboard/settings     → Profil, API keys, billing, webhooks   │
-│  /dashboard/customize    → Dashboard drag-and-drop (Team)        │
-│  /docs                   → Documentation publique SDK + API      │
+│  /                        → Landing page + pricing               │
+│  /login                   → Auth (Supabase)                      │
+│  /signup                  → Onboarding guidé interactif          │
+│                                                                  │
+│  ── MONITOR ──                                                   │
+│  /dashboard               → Vue principale (coûts temps réel WS) │
+│  /dashboard/agents        → Liste et détail par agent            │
+│  /dashboard/agents/[id]   → Détail agent + forecast + recomm.   │
+│  /dashboard/alerts        → Configuration seuils + anomaly       │
+│  /dashboard/budgets       → Budget caps par agent                │
+│  /dashboard/forecast      → Projection fin de mois              │
+│  /dashboard/reports       → Rapports PDF                         │
+│  /dashboard/team          → Cost attribution par équipe (Team)   │
+│                                                                  │
+│  ── REPLAY ──                                                    │
+│  /dashboard/sessions      → Liste des sessions                   │
+│  /dashboard/sessions/[id] → Timeline step-by-step               │
+│  /share/[token]           → Vue partagée publique (read-only)    │
+│                                                                  │
+│  ── PROTECT ──                                                   │
+│  /dashboard/guardrails    → Config guardrails                    │
+│  /dashboard/pii           → Config PII redaction                 │
+│  /dashboard/violations    → Historique violations                │
+│                                                                  │
+│  ── TRANSVERSAL ──                                               │
+│  /dashboard/audit         → Audit log (Team)                     │
+│  /dashboard/customize     → Dashboard drag-and-drop (Team)       │
+│  /dashboard/settings      → Profil, API keys, billing, webhooks  │
+│  /docs                    → Documentation publique SDK + API     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -85,10 +113,10 @@
 ## 2. STRUCTURE DU MONOREPO
 
 ```
-agentcostguard/
+agentshield/
 │
-├── docs/                          ← Documentation projet (25 fichiers)
-├── skills/                        ← Skills Claude Code (17 fichiers)
+├── docs/                          ← Documentation projet (28 fichiers)
+├── skills/                        ← Skills Claude Code (21 fichiers)
 │
 ├── backend/                       ← FastAPI — Python 3.12+
 │   ├── app/
@@ -102,15 +130,28 @@ agentcostguard/
 │   │   │   └── v1/
 │   │   │       ├── __init__.py
 │   │   │       ├── router.py          ← Router principal v1
+│   │   │       │
+│   │   │       │── # MODULE MONITOR
 │   │   │       ├── track.py           ← POST /v1/track — ingestion événements
 │   │   │       ├── agents.py          ← CRUD agents
 │   │   │       ├── analytics.py       ← Données agrégées
 │   │   │       ├── alerts.py          ← Gestion seuils + alertes
-│   │   │       ├── budgets.py         ← Budget caps + auto-freeze
+│   │   │       ├── budgets.py         ← Budget caps + kill switch
 │   │   │       ├── forecasts.py       ← Projections de coûts
-│   │   │       ├── sessions.py        ← Session/workflow costing
-│   │   │       ├── recommendations.py ← Optimisations IA
+│   │   │       ├── recommendations.py ← Cost Autopilot
 │   │   │       ├── reports.py         ← Génération PDF
+│   │   │       │
+│   │   │       │── # MODULE REPLAY
+│   │   │       ├── sessions.py        ← CRUD sessions + timeline
+│   │   │       ├── steps.py           ← Détail steps individuels
+│   │   │       ├── share.py           ← URLs de partage
+│   │   │       │
+│   │   │       │── # MODULE PROTECT
+│   │   │       ├── guardrails.py      ← CRUD règles de protection
+│   │   │       ├── pii.py             ← Config PII redaction
+│   │   │       ├── violations.py      ← Historique violations
+│   │   │       │
+│   │   │       │── # TRANSVERSAL
 │   │   │       ├── billing.py         ← Stripe webhooks + abonnement
 │   │   │       ├── auth.py            ← Auth endpoints
 │   │   │       ├── api_keys.py        ← Création / révocation API keys
@@ -125,12 +166,15 @@ agentcostguard/
 │   │   │   ├── user.py               ← User, Organization, Team
 │   │   │   ├── agent.py              ← Agent
 │   │   │   ├── event.py              ← TrackingEvent
-│   │   │   ├── session.py            ← Session (workflow grouping)
+│   │   │   ├── session.py            ← Session, Step (Replay)
 │   │   │   ├── alert.py              ← Alert, AlertRule
 │   │   │   ├── budget.py             ← BudgetCap, BudgetStatus
 │   │   │   ├── anomaly.py            ← AnomalyBaseline, AnomalyEvent
+│   │   │   ├── guardrail.py          ← GuardrailRule, Violation (Protect)
+│   │   │   ├── pii.py                ← PIIConfig, PIIPattern (Protect)
 │   │   │   ├── api_key.py            ← APIKey
 │   │   │   ├── webhook.py            ← WebhookEndpoint, WebhookDelivery
+│   │   │   ├── share.py              ← SharedSession (Replay)
 │   │   │   ├── audit_log.py          ← AuditEntry
 │   │   │   └── subscription.py       ← Subscription, Invoice
 │   │   │
@@ -142,8 +186,11 @@ agentcostguard/
 │   │   │   ├── alert.py              ← AlertRuleCreate, AlertResponse
 │   │   │   ├── budget.py             ← BudgetCapCreate, BudgetStatus
 │   │   │   ├── forecast.py           ← ForecastResponse
-│   │   │   ├── session.py            ← SessionCostResponse
+│   │   │   ├── session.py            ← SessionResponse, StepResponse (Replay)
 │   │   │   ├── recommendation.py     ← RecommendationResponse
+│   │   │   ├── guardrail.py          ← GuardrailCreate, ViolationResponse
+│   │   │   ├── pii.py                ← PIIConfigUpdate
+│   │   │   ├── share.py              ← ShareCreate, ShareResponse
 │   │   │   ├── webhook.py            ← WebhookCreate, WebhookResponse
 │   │   │   ├── audit.py              ← AuditEntryResponse
 │   │   │   ├── team.py               ← TeamCreate, CostAttribution
@@ -155,11 +202,15 @@ agentcostguard/
 │   │   │   ├── pricing.py            ← Table des prix par modèle + calcul
 │   │   │   ├── analytics.py          ← Agrégation des métriques
 │   │   │   ├── alerts.py             ← Évaluation des seuils + déclenchement
-│   │   │   ├── budgets.py            ← Vérification caps + auto-freeze logic
+│   │   │   ├── smart_alerts.py       ← Diagnostic IA via Claude API
+│   │   │   ├── budgets.py            ← Vérification caps + kill switch logic
 │   │   │   ├── anomaly.py            ← Baseline calculation + spike detection
 │   │   │   ├── forecast.py           ← Projection linéaire + tendance
-│   │   │   ├── sessions.py           ← Agrégation coûts par session
-│   │   │   ├── recommendations.py    ← Appel Claude API pour optimisations
+│   │   │   ├── sessions.py           ← Agrégation sessions + steps (Replay)
+│   │   │   ├── replay.py             ← Timeline construction + sharing (Replay)
+│   │   │   ├── guardrails.py         ← Évaluation des règles (Protect)
+│   │   │   ├── pii.py                ← Détection + redaction PII (Protect)
+│   │   │   ├── recommendations.py    ← Cost Autopilot via Claude API
 │   │   │   ├── stripe.py             ← Interaction Stripe
 │   │   │   ├── brevo.py              ← Envoi d'emails
 │   │   │   ├── slack.py              ← Notifications + bot interactif
@@ -174,10 +225,13 @@ agentcostguard/
 │   │   │   ├── __init__.py
 │   │   │   ├── celery_app.py         ← Config Celery + Redis broker
 │   │   │   ├── tasks_alerts.py       ← Tasks : check seuils, send alerts
+│   │   │   ├── tasks_smart_alerts.py ← Tasks : diagnostic IA async
 │   │   │   ├── tasks_anomaly.py      ← Tasks : baseline update, spike detect
 │   │   │   ├── tasks_aggregation.py  ← Tasks : agrégation horaire/daily
 │   │   │   ├── tasks_forecast.py     ← Tasks : recalcul projections
-│   │   │   ├── tasks_recommendations.py ← Tasks : analyse Claude API async
+│   │   │   ├── tasks_recommendations.py ← Tasks : Cost Autopilot async
+│   │   │   ├── tasks_guardrails.py   ← Tasks : évaluation async des règles
+│   │   │   ├── tasks_pii.py          ← Tasks : scan + redaction PII
 │   │   │   ├── tasks_reports.py      ← Tasks : génération PDF async
 │   │   │   ├── tasks_webhooks.py     ← Tasks : dispatch webhooks + retry
 │   │   │   └── tasks_maintenance.py  ← Tasks : cleanup, sync pricing
@@ -188,33 +242,38 @@ agentcostguard/
 │   │   │   ├── rate_limit.py         ← Rate limiting par plan
 │   │   │   ├── plan_limits.py        ← Vérification limites (agents, requêtes)
 │   │   │   ├── budget_check.py       ← Vérification budget cap avant ingestion
+│   │   │   ├── guardrail_check.py    ← Vérification guardrails avant ingestion
+│   │   │   ├── pii_check.py          ← PII redaction sur les contenus
 │   │   │   └── audit.py              ← Auto-log des actions (Team)
 │   │   │
 │   │   ├── websocket/
 │   │   │   ├── __init__.py
 │   │   │   ├── manager.py            ← Connection manager (par org)
 │   │   │   ├── auth.py               ← Auth WebSocket (JWT token)
-│   │   │   └── handlers.py           ← Message handlers (subscribe/unsubscribe)
+│   │   │   └── handlers.py           ← Message handlers
 │   │   │
 │   │   └── utils/
 │   │       ├── __init__.py
 │   │       ├── supabase.py           ← Client Supabase
 │   │       ├── redis.py              ← Client Redis
+│   │       ├── pii_patterns.py       ← Regex patterns PII
 │   │       └── errors.py             ← Exceptions custom + handlers
 │   │
 │   ├── migrations/
-│   │   └── ...                       ← Migrations SQL Supabase
-│   │
 │   ├── tests/
 │   │   ├── __init__.py
-│   │   ├── conftest.py               ← Fixtures pytest
+│   │   ├── conftest.py
 │   │   ├── test_track.py
 │   │   ├── test_analytics.py
 │   │   ├── test_alerts.py
+│   │   ├── test_smart_alerts.py
 │   │   ├── test_budgets.py
 │   │   ├── test_anomaly.py
 │   │   ├── test_forecast.py
 │   │   ├── test_sessions.py
+│   │   ├── test_replay.py
+│   │   ├── test_guardrails.py
+│   │   ├── test_pii.py
 │   │   ├── test_recommendations.py
 │   │   ├── test_billing.py
 │   │   ├── test_api_keys.py
@@ -229,27 +288,33 @@ agentcostguard/
 ├── frontend/                          ← Next.js 14 + TypeScript
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── layout.tsx            ← Root layout (dark mode, fonts)
+│   │   │   ├── layout.tsx            ← Root layout (dark mode only)
 │   │   │   ├── page.tsx              ← Landing page
 │   │   │   ├── (auth)/
 │   │   │   │   ├── login/page.tsx
 │   │   │   │   └── signup/page.tsx
 │   │   │   ├── (onboarding)/
-│   │   │   │   └── setup/page.tsx    ← Onboarding guidé step-by-step
+│   │   │   │   └── setup/page.tsx
 │   │   │   ├── (dashboard)/
 │   │   │   │   ├── layout.tsx        ← Dashboard layout (sidebar, nav, WS)
 │   │   │   │   ├── dashboard/page.tsx
 │   │   │   │   ├── dashboard/agents/page.tsx
 │   │   │   │   ├── dashboard/agents/[id]/page.tsx
-│   │   │   │   ├── dashboard/sessions/page.tsx
+│   │   │   │   ├── dashboard/sessions/page.tsx       ← REPLAY
+│   │   │   │   ├── dashboard/sessions/[id]/page.tsx  ← REPLAY
 │   │   │   │   ├── dashboard/alerts/page.tsx
 │   │   │   │   ├── dashboard/budgets/page.tsx
 │   │   │   │   ├── dashboard/forecast/page.tsx
+│   │   │   │   ├── dashboard/guardrails/page.tsx     ← PROTECT
+│   │   │   │   ├── dashboard/pii/page.tsx            ← PROTECT
+│   │   │   │   ├── dashboard/violations/page.tsx     ← PROTECT
 │   │   │   │   ├── dashboard/reports/page.tsx
 │   │   │   │   ├── dashboard/team/page.tsx
 │   │   │   │   ├── dashboard/audit/page.tsx
 │   │   │   │   ├── dashboard/customize/page.tsx
 │   │   │   │   └── dashboard/settings/page.tsx
+│   │   │   ├── share/
+│   │   │   │   └── [token]/page.tsx  ← Replay partagé (public, read-only)
 │   │   │   └── docs/
 │   │   │       └── page.tsx
 │   │   │
@@ -260,21 +325,34 @@ agentcostguard/
 │   │   │   │   ├── CostByAgent.tsx
 │   │   │   │   ├── CostByProvider.tsx
 │   │   │   │   ├── CostByModel.tsx
-│   │   │   │   ├── ForecastChart.tsx       ← Projection avec zone de confiance
-│   │   │   │   ├── AnomalyTimeline.tsx     ← Spikes détectés sur timeline
-│   │   │   │   └── TeamAttribution.tsx     ← Répartition par équipe
+│   │   │   │   ├── ForecastChart.tsx
+│   │   │   │   ├── AnomalyTimeline.tsx
+│   │   │   │   └── TeamAttribution.tsx
 │   │   │   ├── dashboard/
 │   │   │   │   ├── Sidebar.tsx
 │   │   │   │   ├── TopNav.tsx
 │   │   │   │   ├── StatsCards.tsx
 │   │   │   │   ├── AgentTable.tsx
-│   │   │   │   ├── SessionTable.tsx
 │   │   │   │   ├── AlertBanner.tsx
-│   │   │   │   ├── BudgetGauge.tsx         ← Jauge visuelle budget consommé
-│   │   │   │   ├── ForecastBanner.tsx      ← "Projected: $X by end of month"
-│   │   │   │   ├── RecommendationCard.tsx  ← Suggestion d'optimisation
-│   │   │   │   ├── AnomalyAlert.tsx        ← Notification spike détecté
-│   │   │   │   └── WidgetGrid.tsx          ← Container drag-and-drop (Team)
+│   │   │   │   ├── BudgetGauge.tsx
+│   │   │   │   ├── ForecastBanner.tsx
+│   │   │   │   ├── RecommendationCard.tsx
+│   │   │   │   ├── SmartAlertCard.tsx      ← Diagnostic IA
+│   │   │   │   ├── AnomalyAlert.tsx
+│   │   │   │   └── WidgetGrid.tsx
+│   │   │   ├── replay/                     ← MODULE REPLAY
+│   │   │   │   ├── SessionList.tsx
+│   │   │   │   ├── SessionTimeline.tsx     ← Timeline step-by-step
+│   │   │   │   ├── StepDetail.tsx          ← Input/output d'un step
+│   │   │   │   ├── StepCostBadge.tsx       ← Coût par step
+│   │   │   │   ├── SessionStats.tsx        ← KPIs de la session
+│   │   │   │   └── ShareButton.tsx
+│   │   │   ├── protect/                    ← MODULE PROTECT
+│   │   │   │   ├── GuardrailList.tsx
+│   │   │   │   ├── GuardrailForm.tsx
+│   │   │   │   ├── PIIConfig.tsx
+│   │   │   │   ├── ViolationList.tsx
+│   │   │   │   └── KillSwitchToggle.tsx
 │   │   │   ├── onboarding/
 │   │   │   │   ├── StepInstallSDK.tsx
 │   │   │   │   ├── StepCopyAPIKey.tsx
@@ -283,12 +361,14 @@ agentcostguard/
 │   │   │   ├── landing/
 │   │   │   │   ├── Hero.tsx
 │   │   │   │   ├── Features.tsx
+│   │   │   │   ├── ModuleCards.tsx         ← Monitor / Replay / Protect
 │   │   │   │   ├── Pricing.tsx
 │   │   │   │   ├── Testimonials.tsx
 │   │   │   │   └── CTA.tsx
 │   │   │   └── shared/
 │   │   │       ├── Logo.tsx
 │   │   │       ├── ThemeProvider.tsx
+│   │   │       ├── ModuleBadge.tsx         ← Badge "Monitor" / "Replay" / "Protect"
 │   │   │       └── LoadingSpinner.tsx
 │   │   │
 │   │   ├── lib/
@@ -296,7 +376,7 @@ agentcostguard/
 │   │   │   │   ├── client.ts
 │   │   │   │   └── server.ts
 │   │   │   ├── api.ts
-│   │   │   ├── websocket.ts          ← Client WebSocket + reconnection
+│   │   │   ├── websocket.ts
 │   │   │   ├── stripe.ts
 │   │   │   └── utils.ts
 │   │   │
@@ -304,29 +384,32 @@ agentcostguard/
 │   │   │   ├── useAuth.ts
 │   │   │   ├── useAgents.ts
 │   │   │   ├── useAnalytics.ts
-│   │   │   ├── useWebSocket.ts       ← Hook WebSocket avec auto-reconnect
+│   │   │   ├── useWebSocket.ts
 │   │   │   ├── useForecast.ts
 │   │   │   ├── useBudgets.ts
-│   │   │   ├── useSessions.ts
+│   │   │   ├── useSessions.ts          ← REPLAY
+│   │   │   ├── useGuardrails.ts        ← PROTECT
+│   │   │   ├── useViolations.ts        ← PROTECT
 │   │   │   └── useSubscription.ts
 │   │   │
 │   │   └── types/
 │   │       ├── agent.ts
 │   │       ├── event.ts
-│   │       ├── session.ts
+│   │       ├── session.ts              ← REPLAY
+│   │       ├── step.ts                 ← REPLAY
 │   │       ├── alert.ts
 │   │       ├── budget.ts
 │   │       ├── forecast.ts
 │   │       ├── recommendation.ts
+│   │       ├── guardrail.ts            ← PROTECT
+│   │       ├── violation.ts            ← PROTECT
+│   │       ├── pii.ts                  ← PROTECT
 │   │       ├── webhook.ts
 │   │       ├── audit.ts
 │   │       ├── team.ts
 │   │       └── subscription.ts
 │   │
 │   ├── public/
-│   │   ├── logo.svg
-│   │   └── og-image.png
-│   │
 │   ├── next.config.js
 │   ├── tailwind.config.ts
 │   ├── tsconfig.json
@@ -335,22 +418,34 @@ agentcostguard/
 │   └── .env.example
 │
 ├── sdk/                              ← SDK Python — package PyPI
-│   ├── agentcostguard/
-│   │   ├── __init__.py              ← Exports publics (track, session, set_budget)
+│   ├── agentshield/
+│   │   ├── __init__.py              ← Exports (shield, session, set_budget)
 │   │   ├── client.py                ← Client HTTP (requests + retry)
-│   │   ├── tracker.py               ← Décorateur @track + context manager
+│   │   ├── shield.py                ← Décorateur @shield + capture
 │   │   ├── sessions.py              ← Context manager session()
+│   │   ├── steps.py                 ← Step tracking (Replay)
 │   │   ├── budgets.py               ← set_budget() + BudgetExceededError
+│   │   ├── guardrails.py            ← Client-side guardrail check (Protect)
+│   │   ├── pii.py                   ← Client-side PII redaction (Protect)
 │   │   ├── pricing.py               ← Table prix locale (fallback)
-│   │   ├── models.py                ← Dataclasses (TrackEvent, etc.)
-│   │   └── exceptions.py            ← Exceptions SDK
+│   │   ├── models.py                ← Dataclasses
+│   │   ├── exceptions.py            ← Exceptions SDK
+│   │   └── integrations/
+│   │       ├── __init__.py
+│   │       ├── langchain.py         ← LangChainCallback
+│   │       ├── crewai.py            ← CrewAICallback
+│   │       ├── autogen.py           ← AutoGenCallback
+│   │       └── llamaindex.py        ← LlamaIndexCallback
 │   │
 │   ├── tests/
-│   │   ├── test_tracker.py
+│   │   ├── test_shield.py
 │   │   ├── test_client.py
 │   │   ├── test_sessions.py
 │   │   ├── test_budgets.py
-│   │   └── test_pricing.py
+│   │   ├── test_guardrails.py
+│   │   ├── test_pii.py
+│   │   ├── test_pricing.py
+│   │   └── test_integrations.py
 │   │
 │   ├── pyproject.toml
 │   ├── README.md
@@ -375,9 +470,7 @@ agentcostguard/
 
 ---
 
-## 3. SCHÉMA BASE DE DONNÉES
-
-### Tables principales (14 tables)
+## 3. SCHÉMA BASE DE DONNÉES (19 tables)
 
 ```sql
 -- ============================================================
@@ -395,6 +488,8 @@ CREATE TABLE organizations (
     max_agents             INT NOT NULL DEFAULT 1,
     max_requests           INT NOT NULL DEFAULT 10000,
     history_days           INT NOT NULL DEFAULT 7,
+    modules_enabled        TEXT[] NOT NULL DEFAULT '{monitor}',
+    pii_redaction_enabled  BOOLEAN NOT NULL DEFAULT true,
     created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at             TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -419,6 +514,7 @@ CREATE TABLE agents (
     name            TEXT NOT NULL,
     description     TEXT,
     is_active       BOOLEAN NOT NULL DEFAULT true,
+    is_frozen       BOOLEAN NOT NULL DEFAULT false,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE(organization_id, name)
@@ -433,16 +529,25 @@ CREATE TABLE events (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     agent_id        UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
     session_id      TEXT,
+    step            INT,
+    step_name       TEXT,
     provider        TEXT NOT NULL,
     model           TEXT NOT NULL,
     input_tokens    INT NOT NULL DEFAULT 0,
     output_tokens   INT NOT NULL DEFAULT 0,
     total_tokens    INT NOT NULL DEFAULT 0,
     cost_usd        DECIMAL(12, 6) NOT NULL,
+    input_text      TEXT,
+    output_text     TEXT,
+    input_redacted  TEXT,
+    output_redacted TEXT,
     workflow        TEXT,
     user_label      TEXT,
     team_label      TEXT,
+    status          TEXT DEFAULT 'success' CHECK (status IN ('success', 'error', 'timeout')),
+    duration_ms     INT,
     metadata        JSONB DEFAULT '{}',
+    guardrail_violations JSONB DEFAULT '[]',
     tracked_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -451,6 +556,45 @@ CREATE INDEX idx_events_agent_time ON events (agent_id, tracked_at DESC);
 CREATE INDEX idx_events_org_agent ON events (organization_id, agent_id);
 CREATE INDEX idx_events_session ON events (organization_id, session_id) WHERE session_id IS NOT NULL;
 CREATE INDEX idx_events_team ON events (organization_id, team_label) WHERE team_label IS NOT NULL;
+CREATE INDEX idx_events_status ON events (organization_id, status) WHERE status != 'success';
+
+-- ============================================================
+-- SESSIONS — Agrégation Replay
+-- ============================================================
+
+CREATE TABLE sessions (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    session_id      TEXT NOT NULL,
+    agent_ids       UUID[] NOT NULL DEFAULT '{}',
+    total_steps     INT NOT NULL DEFAULT 0,
+    total_cost_usd  DECIMAL(12, 6) NOT NULL DEFAULT 0,
+    total_tokens    INT NOT NULL DEFAULT 0,
+    status          TEXT DEFAULT 'success' CHECK (status IN ('success', 'error', 'partial', 'running')),
+    duration_ms     INT,
+    started_at      TIMESTAMPTZ NOT NULL,
+    ended_at        TIMESTAMPTZ,
+    metadata        JSONB DEFAULT '{}',
+    UNIQUE(organization_id, session_id)
+);
+
+CREATE INDEX idx_sessions_org_time ON sessions (organization_id, started_at DESC);
+CREATE INDEX idx_sessions_status ON sessions (organization_id, status);
+
+-- ============================================================
+-- SHARED SESSIONS (Replay public links)
+-- ============================================================
+
+CREATE TABLE shared_sessions (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    session_id      TEXT NOT NULL,
+    share_token     TEXT UNIQUE NOT NULL,
+    created_by      UUID REFERENCES auth.users(id),
+    expires_at      TIMESTAMPTZ,
+    is_active       BOOLEAN NOT NULL DEFAULT true,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 -- ============================================================
 -- AGRÉGATIONS — Pré-calculées par Celery
@@ -466,6 +610,7 @@ CREATE TABLE aggregations_hourly (
     total_requests  INT NOT NULL DEFAULT 0,
     total_tokens    INT NOT NULL DEFAULT 0,
     total_cost_usd  DECIMAL(12, 6) NOT NULL DEFAULT 0,
+    error_count     INT NOT NULL DEFAULT 0,
     UNIQUE(organization_id, agent_id, provider, model, hour)
 );
 
@@ -479,6 +624,7 @@ CREATE TABLE aggregations_daily (
     total_requests  INT NOT NULL DEFAULT 0,
     total_tokens    INT NOT NULL DEFAULT 0,
     total_cost_usd  DECIMAL(12, 6) NOT NULL DEFAULT 0,
+    error_count     INT NOT NULL DEFAULT 0,
     UNIQUE(organization_id, agent_id, provider, model, day)
 );
 
@@ -493,7 +639,8 @@ CREATE TABLE alert_rules (
     name             TEXT NOT NULL,
     metric           TEXT NOT NULL
                      CHECK (metric IN ('cost_daily', 'cost_weekly', 'cost_monthly',
-                                        'requests_daily', 'requests_hourly', 'anomaly')),
+                                        'requests_daily', 'requests_hourly', 'anomaly',
+                                        'error_rate', 'guardrail_violation')),
     threshold        DECIMAL(12, 2),
     channel          TEXT NOT NULL
                      CHECK (channel IN ('email', 'slack', 'both', 'webhook')),
@@ -512,6 +659,8 @@ CREATE TABLE alert_history (
     triggered_value DECIMAL(12, 6) NOT NULL,
     threshold       DECIMAL(12, 2) NOT NULL,
     channel         TEXT NOT NULL,
+    smart_diagnosis TEXT,
+    suggested_fix   TEXT,
     sent_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -541,7 +690,7 @@ CREATE TABLE anomaly_baselines (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     agent_id        UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-    metric          TEXT NOT NULL CHECK (metric IN ('cost_hourly', 'requests_hourly')),
+    metric          TEXT NOT NULL CHECK (metric IN ('cost_hourly', 'requests_hourly', 'error_rate_hourly')),
     hour_of_day     INT NOT NULL CHECK (hour_of_day BETWEEN 0 AND 23),
     day_of_week     INT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
     mean            DECIMAL(12, 6) NOT NULL DEFAULT 0,
@@ -549,6 +698,53 @@ CREATE TABLE anomaly_baselines (
     sample_count    INT NOT NULL DEFAULT 0,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE(organization_id, agent_id, metric, hour_of_day, day_of_week)
+);
+
+-- ============================================================
+-- GUARDRAILS (Protect)
+-- ============================================================
+
+CREATE TABLE guardrail_rules (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    agent_id        UUID REFERENCES agents(id) ON DELETE CASCADE,
+    name            TEXT NOT NULL,
+    type            TEXT NOT NULL CHECK (type IN ('keyword', 'topic', 'regex', 'category')),
+    config          JSONB NOT NULL,
+    action          TEXT NOT NULL DEFAULT 'log'
+                    CHECK (action IN ('log', 'block', 'redact')),
+    is_active       BOOLEAN NOT NULL DEFAULT true,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE guardrail_violations (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    guardrail_id    UUID NOT NULL REFERENCES guardrail_rules(id) ON DELETE CASCADE,
+    event_id        UUID REFERENCES events(id) ON DELETE SET NULL,
+    agent_id        UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+    session_id      TEXT,
+    matched_content TEXT,
+    action_taken    TEXT NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_violations_org_time ON guardrail_violations (organization_id, created_at DESC);
+
+-- ============================================================
+-- PII CONFIGURATION (Protect)
+-- ============================================================
+
+CREATE TABLE pii_configs (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    patterns_enabled TEXT[] NOT NULL DEFAULT '{email,phone,credit_card,ssn}',
+    custom_patterns  JSONB DEFAULT '[]',
+    action          TEXT NOT NULL DEFAULT 'redact'
+                    CHECK (action IN ('redact', 'hash', 'log_only')),
+    store_original  BOOLEAN NOT NULL DEFAULT false,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(organization_id)
 );
 
 -- ============================================================
@@ -611,26 +807,28 @@ CREATE TABLE audit_log (
 CREATE INDEX idx_audit_org_time ON audit_log (organization_id, created_at DESC);
 
 -- ============================================================
--- ROW LEVEL SECURITY
+-- ROW LEVEL SECURITY — 19 tables
 -- ============================================================
 
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shared_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE aggregations_hourly ENABLE ROW LEVEL SECURITY;
 ALTER TABLE aggregations_daily ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alert_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alert_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budget_caps ENABLE ROW LEVEL SECURITY;
 ALTER TABLE anomaly_baselines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE guardrail_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE guardrail_violations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pii_configs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webhook_endpoints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE webhook_deliveries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
-
--- Pattern RLS : l'utilisateur ne voit que les données de son organization
--- Voir SECURITY.md pour les policies complètes
 ```
 
 ---
@@ -649,122 +847,160 @@ SDK/API → FastAPI
     │      → Redis counter : usage actuel vs max_usd
     │      → Si frozen → retourner 429 + BudgetExceededError
     │
-    ├── 3. Vérifier limites du plan (middleware plan_limits)
-    │      → Redis counter : requêtes ce mois / max autorisé
+    ├── 3. Vérifier guardrails (middleware guardrail_check) [Protect]
+    │      → Charger les règles actives depuis Redis cache
+    │      → Évaluer input_text + output_text contre les règles
+    │      → Si violation + action=block → retourner 403
+    │      → Si violation + action=log → logger et continuer
+    │      → Si violation + action=redact → masquer le contenu
     │
-    ├── 4. Valider le payload (schema Pydantic)
+    ├── 4. PII redaction (middleware pii_check) [Protect]
+    │      → Scanner input_text + output_text
+    │      → Stocker la version redacted dans input_redacted / output_redacted
+    │      → Si store_original=false → ne PAS stocker input_text / output_text
     │
-    ├── 5. Calculer le coût si non fourni
-    │      → services/pricing.py : lookup modèle → prix par token
-    │      → Redis cache de la table de prix (TTL 1h)
+    ├── 5. Vérifier limites du plan (middleware plan_limits)
     │
-    ├── 6. Auto-créer l'agent si nouveau nom
-    │      → INSERT ... ON CONFLICT DO NOTHING
+    ├── 6. Valider le payload (schema Pydantic)
     │
-    ├── 7. Insérer l'événement dans la table events
-    │      → Supabase direct insert
+    ├── 7. Calculer le coût si non fourni
+    │      → services/pricing.py → Redis cache (TTL 1h)
     │
-    ├── 8. Mettre à jour le budget counter dans Redis
-    │      → INCRBYFLOAT budget:{org}:{agent}:{period}
+    ├── 8. Auto-créer l'agent si nouveau
     │
-    ├── 9. Publier sur Redis Pub/Sub pour WebSocket
-    │      → Channel : ws:{organization_id}
-    │      → Le frontend reçoit l'event en temps réel
+    ├── 9. Insérer l'événement dans la table events
     │
-    ├── 10. Dispatch tasks Celery (async, ne bloque pas) :
+    ├── 10. Mettre à jour/créer la session (si session_id fourni) [Replay]
+    │       → UPSERT sessions : incrémenter total_steps, total_cost, etc.
+    │
+    ├── 11. Mettre à jour le budget counter dans Redis
+    │
+    ├── 12. Publier sur Redis Pub/Sub pour WebSocket
+    │       → Channel : ws:{organization_id}
+    │
+    ├── 13. Dispatch tasks Celery (async) :
     │       → check_alert_thresholds
-    │       → check_anomaly (compare à la baseline)
+    │       → check_anomaly
     │       → dispatch_webhooks (si configurés)
+    │       → log_guardrail_violations (si violations détectées)
     │
-    └── 11. Retourner 201 + event_id + cost calculé
+    └── 14. Retourner 201 + event_id + cost + budget status + violations
             → Latence cible : < 50ms p95
 ```
 
-### 4.2 — Anomaly detection (Celery task)
+### 4.2 — Smart Alert (Celery task)
 
 ```
-check_anomaly(organization_id, agent_id, event)
+smart_alert_diagnosis(alert_id, organization_id)
     │
-    ├── 1. Charger la baseline pour cet agent/heure/jour
-    │      → anomaly_baselines table
+    ├── 1. Charger le contexte de l'alerte
+    │      → Derniers events de l'agent, baseline, anomalie
     │
-    ├── 2. Calculer le z-score de l'event actuel
-    │      → z = (valeur - mean) / stddev
+    ├── 2. Appel Claude API avec le contexte :
+    │      "Alert fired: agent 'support-agent' cost $23.47 today (threshold: $20).
+    │       Recent pattern: step 4 costs 3x more than usual.
+    │       Last 10 events show model gpt-4o with avg 2400 input tokens.
+    │       Diagnose the probable cause and suggest a fix."
     │
-    ├── 3. Si z > 3 (3 sigma) → anomalie détectée
-    │      ├── Créer une alerte automatique
-    │      ├── Publier sur WebSocket (AnomalyAlert)
-    │      └── Dispatch send_alert (email/slack)
+    ├── 3. Parser la réponse structurée
+    │      → { diagnosis: "...", suggested_fix: "...", confidence: 0.85 }
     │
-    └── 4. Mettre à jour la baseline (moving average)
-           → Recalcul incrémental mean + stddev
+    ├── 4. Stocker dans alert_history (smart_diagnosis, suggested_fix)
+    │
+    └── 5. Inclure le diagnostic dans la notification (email/Slack)
 ```
 
-### 4.3 — Cost forecast (Celery scheduled task — toutes les heures)
+### 4.3 — Replay session timeline (GET /v1/sessions/:id)
 
 ```
-calculate_forecasts(organization_id)
+Frontend → FastAPI /v1/sessions/:id
     │
-    ├── 1. Charger les coûts daily du mois en cours
+    ├── 1. Auth JWT (Supabase token) OU share_token (public)
     │
-    ├── 2. Calculer la tendance linéaire (linear regression)
+    ├── 2. Charger la session depuis la table sessions
     │
-    ├── 3. Projeter jusqu'à fin de mois
-    │      → projected_total = current_total + (daily_avg * jours_restants)
+    ├── 3. Charger tous les events de cette session (ordonnés par step)
+    │      → events WHERE session_id = :id ORDER BY step ASC, tracked_at ASC
     │
-    ├── 4. Calculer intervalle de confiance (±15%)
+    ├── 4. Pour chaque event/step, inclure :
+    │      → step number, step_name, agent, model
+    │      → input_redacted (ou input_text si autorisé)
+    │      → output_redacted (ou output_text si autorisé)
+    │      → cost, tokens, duration, status
+    │      → guardrail_violations si présentes
     │
-    ├── 5. Stocker dans Redis (TTL 1h)
-    │      → forecast:{org_id} = {projected, confidence_low, confidence_high}
+    ├── 5. Formater en timeline ordonnée
     │
-    └── 6. Si projected > budget mensuel → alerte proactive
+    └── 6. Retourner JSON
 ```
 
-### 4.4 — WebSocket temps réel
+### 4.4 — Guardrail evaluation (middleware sync + Celery async)
 
 ```
-Frontend (dashboard) ←→ FastAPI WebSocket /ws/dashboard
+Pendant l'ingestion (sync — middleware) :
     │
-    ├── 1. Connection : client envoie JWT token
-    │      → Vérification auth → extraction org_id
+    ├── 1. Charger les guardrail_rules actives (Redis cache TTL 5min)
     │
-    ├── 2. Subscribe : client rejoint le channel Redis ws:{org_id}
+    ├── 2. Pour chaque règle, évaluer :
+    │      ├── keyword : input_text/output_text contient le mot ?
+    │      ├── regex : match le pattern ?
+    │      ├── topic : classification basique par mots-clés groupés
+    │      └── category : liste noire de catégories
     │
-    ├── 3. Events reçus en temps réel :
-    │      ├── new_event     → nouveau tracking event
-    │      ├── alert_fired   → alerte déclenchée
-    │      ├── anomaly       → spike détecté
-    │      ├── budget_warning → cap bientôt atteint
-    │      └── budget_frozen → agent auto-freeze
+    ├── 3. Si match :
+    │      ├── action=block → rejeter l'event (403)
+    │      ├── action=redact → masquer le contenu matché
+    │      └── action=log → attacher la violation à l'event
     │
-    ├── 4. Reconnection automatique côté client
-    │      → Exponential backoff + fallback polling
-    │
-    └── 5. Heartbeat toutes les 30s pour garder la connexion
+    └── 4. Dispatch async : log_guardrail_violation (Celery)
+           → Insérer dans guardrail_violations
+           → Incrémenter counter WebSocket
+           → Déclencher alerte si configurée
 ```
 
-### 4.5 — Dashboard analytics (GET /v1/analytics)
+### 4.5 — PII redaction (middleware sync)
 
 ```
-Frontend → FastAPI /v1/analytics
+Pendant l'ingestion (sync — avant stockage) :
     │
-    ├── 1. Auth JWT (Supabase token)
+    ├── 1. Charger pii_config de l'org (Redis cache TTL 5min)
     │
-    ├── 2. Parser les filtres (date range, agent, provider, model, team)
+    ├── 2. Scanner input_text + output_text avec les patterns :
+    │      ├── email : regex email standard
+    │      ├── phone : regex phone US/EU/international
+    │      ├── credit_card : regex Luhn-validé
+    │      ├── ssn : regex SSN format
+    │      └── custom : patterns définis par l'org
     │
-    ├── 3. Query les tables d'agrégation (pas events directement)
-    │      → aggregations_daily pour les vues > 24h
-    │      → aggregations_hourly pour les vues < 24h
-    │      → events uniquement pour le temps réel (dernière heure)
+    ├── 3. Appliquer l'action :
+    │      ├── redact → remplacer par [REDACTED:email], [REDACTED:phone], etc.
+    │      ├── hash → remplacer par SHA-256 hash
+    │      └── log_only → noter la position mais garder le contenu
     │
-    ├── 4. Formater la réponse
-    │      → Séries temporelles pour les graphiques
-    │      → Totaux pour les KPI cards
-    │      → Top agents / modèles / providers
-    │      → Répartition par team (si Team plan)
+    ├── 4. Stocker :
+    │      → input_redacted = version nettoyée
+    │      → output_redacted = version nettoyée
+    │      → Si store_original=true → garder input_text/output_text
+    │      → Si store_original=false → input_text/output_text = NULL
     │
-    └── 5. Retourner JSON
-            → Redis cache 30s pour les requêtes identiques
+    └── 5. Le Replay affiche par défaut les versions redacted
+```
+
+### 4.6 — WebSocket temps réel
+
+```
+Frontend ←→ FastAPI WebSocket /ws/dashboard
+    │
+    ├── Events reçus en temps réel :
+    │      ├── new_event       → nouveau tracking event
+    │      ├── alert_fired     → alerte déclenchée
+    │      ├── smart_alert     → diagnostic IA disponible
+    │      ├── anomaly         → spike détecté
+    │      ├── budget_warning  → cap bientôt atteint
+    │      ├── budget_frozen   → agent kill switch activé
+    │      ├── session_update  → session en cours mise à jour (Replay)
+    │      ├── violation       → guardrail violation détectée (Protect)
+    │      └── pii_detected    → PII trouvé et redacted (Protect)
 ```
 
 ---
@@ -773,228 +1009,109 @@ Frontend → FastAPI /v1/analytics
 
 ```
 ┌──────────────────────────────────────────────────┐
-│              FRONTEND (Dashboard)                  │
-│                                                    │
+│  FRONTEND (Dashboard)                              │
 │  Auth : Supabase JWT                               │
-│  Flow : login → Supabase Auth → JWT → header       │
-│  Utilisé pour : dashboard, settings, billing       │
 │  Middleware : verify_jwt()                          │
 └──────────────────────────────────────────────────┘
-
 ┌──────────────────────────────────────────────────┐
-│              SDK / API DIRECTE                     │
-│                                                    │
+│  SDK / API DIRECTE                                 │
 │  Auth : API Key (Bearer token)                     │
-│  Flow : user crée une key → key_hash en DB         │
-│  Utilisé pour : POST /v1/track uniquement          │
+│  Format : ags_live_xxxxxxxxxxxxxxxxxxxx            │
+│  Prefix : ags_live_xxxx                            │
+│  Hash : SHA-256 en DB                              │
 │  Middleware : verify_api_key()                      │
-│  Stockage : SHA-256 hash en DB, jamais en clair    │
-│  Format : acg_live_xxxxxxxxxxxxxxxxxxxx            │
-│  Prefix visible : acg_live_xxxx (pour identification)│
 └──────────────────────────────────────────────────┘
-
 ┌──────────────────────────────────────────────────┐
-│              WEBSOCKET                             │
-│                                                    │
+│  WEBSOCKET                                         │
 │  Auth : JWT envoyé à la connexion                  │
-│  Flow : connect → send JWT → verify → subscribe    │
-│  Utilisé pour : dashboard temps réel               │
 │  Middleware : verify_ws_token()                     │
 └──────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│  SHARED SESSION (Replay public)                    │
+│  Auth : share_token dans l'URL                     │
+│  Read-only, pas de JWT requis                      │
+│  Expiration configurable                           │
+└──────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 6. RATE LIMITING
+## 6. CACHING STRATEGY
 
 ```
-Par plan, via Redis sliding window :
+Redis — 9 usages :
 
-| Plan    | POST /v1/track | Dashboard API  | WebSocket msgs |
-|---------|----------------|----------------|----------------|
-| Free    | 100/min        | 30/min         | 10/min         |
-| Starter | 500/min        | 60/min         | 30/min         |
-| Pro     | 2000/min       | 120/min        | 60/min         |
-| Team    | 5000/min       | 200/min        | 120/min        |
-
-Header de réponse :
-X-RateLimit-Limit: 500
-X-RateLimit-Remaining: 487
-X-RateLimit-Reset: 1711234567
+1. PRICING TABLE          → pricing:{provider}:{model}           TTL 1h
+2. API KEY VALIDATION     → apikey:{key_hash}                    TTL 5min
+3. RATE LIMIT COUNTERS    → ratelimit:{org}:{endpoint}:{window}  TTL window
+4. BUDGET COUNTERS        → budget:{org}:{agent}:{period}         TTL period
+5. FORECAST CACHE         → forecast:{org}                        TTL 1h
+6. ANALYTICS CACHE        → analytics:{org}:{query_hash}          TTL 30s
+7. GUARDRAIL RULES CACHE  → guardrails:{org}                      TTL 5min
+8. PII CONFIG CACHE       → pii:{org}                             TTL 5min
+9. WEBSOCKET PUB/SUB      → Channel ws:{org}                      N/A
 ```
 
 ---
 
-## 7. CACHING STRATEGY
+## 7. DÉCISIONS ARCHITECTURALES
 
-```
-Redis est utilisé pour 7 choses :
+### Pourquoi 3 modules dans 1 produit ?
+Le marché a Helicone (Monitor), LangSmith (Replay-like), et rien de mature pour Protect. En combinant les trois, on crée un produit sticky — le user ne peut pas facilement remplacer un module sans perdre l'intégration des deux autres. Le fait que Replay s'ouvre depuis une Smart Alert, et que Protect empêche la récurrence, crée un cycle vertueux.
 
-1. PRICING TABLE
-   Key   : pricing:{provider}:{model}
-   Value : {input_per_token, output_per_token}
-   TTL   : 1 heure
+### Pourquoi stocker les inputs/outputs (Replay) ?
+C'est la valeur #1 de Replay : voir exactement ce que l'agent a fait. Mais c'est aussi le risque #1 (PII, données sensibles). D'où PII redaction par défaut et store_original=false par défaut. Le user doit opt-in pour garder les contenus bruts.
 
-2. API KEY VALIDATION
-   Key   : apikey:{key_hash}
-   Value : {organization_id, plan, is_active}
-   TTL   : 5 minutes
+### Pourquoi PII redaction côté serveur ET client ?
+Le SDK fait un premier pass de redaction avant d'envoyer (protection en transit). Le serveur fait un second pass (protection au repos). Double couche de sécurité.
 
-3. RATE LIMIT COUNTERS
-   Key   : ratelimit:{org_id}:{endpoint}:{window}
-   Value : counter
-   TTL   : durée de la window (1 min)
-
-4. BUDGET COUNTERS
-   Key   : budget:{org_id}:{agent_id}:{period}
-   Value : current_usage (float)
-   TTL   : durée du period (1 day / 1 week / 1 month)
-
-5. FORECAST CACHE
-   Key   : forecast:{org_id}
-   Value : {projected, confidence_low, confidence_high, calculated_at}
-   TTL   : 1 heure
-
-6. ANALYTICS CACHE
-   Key   : analytics:{org_id}:{query_hash}
-   Value : JSON réponse
-   TTL   : 30 secondes
-
-7. WEBSOCKET PUB/SUB
-   Channel : ws:{org_id}
-   Messages : new_event, alert_fired, anomaly, budget_warning
-```
-
----
-
-## 8. PATTERN MULTI-TENANT
-
-```
-Toute donnée est scopée par organization_id.
-
-Règles :
-- Chaque user appartient à exactement 1 organization
-- Chaque requête DB inclut un filtre organization_id
-- RLS Supabase appliqué sur TOUTES les tables (14 tables)
-- Le plan Free crée automatiquement une organization (1 user = 1 org)
-- Le plan Team permet d'inviter des membres dans la même org
-- Un user ne peut JAMAIS voir les données d'une autre org
-- Le team_label sur users et events permet l'attribution par équipe
-
-Hiérarchie :
-Organization
-    ├── Users (owner, admin, member) — avec team_label
-    ├── Agents
-    ├── Events (avec session_id et team_label)
-    ├── Sessions (agrégées depuis events)
-    ├── Alert Rules
-    ├── Budget Caps
-    ├── Anomaly Baselines
-    ├── API Keys
-    ├── Webhook Endpoints
-    ├── Audit Log
-    └── Subscription
-```
-
----
-
-## 9. ENVIRONNEMENTS
-
-```
-┌─────────────┬─────────────────┬─────────────────┬──────────────────┐
-│             │ Development     │ Staging         │ Production       │
-├─────────────┼─────────────────┼─────────────────┼──────────────────┤
-│ Backend     │ localhost:8000  │ staging-api.    │ api.             │
-│             │                 │ agentcostguard  │ agentcostguard   │
-│             │                 │ .io             │ .io              │
-├─────────────┼─────────────────┼─────────────────┼──────────────────┤
-│ Frontend    │ localhost:3000  │ staging-app.    │ app.             │
-│             │                 │ agentcostguard  │ agentcostguard   │
-│             │                 │ .io             │ .io              │
-├─────────────┼─────────────────┼─────────────────┼──────────────────┤
-│ WebSocket   │ ws://localhost  │ wss://staging-  │ wss://api.       │
-│             │ :8000/ws        │ api.../ws       │ .../ws           │
-├─────────────┼─────────────────┼─────────────────┼──────────────────┤
-│ Database    │ Supabase local  │ Supabase        │ Supabase         │
-│             │ (Docker)        │ projet staging  │ projet prod      │
-├─────────────┼─────────────────┼─────────────────┼──────────────────┤
-│ Redis       │ localhost:6379  │ Railway Redis   │ Railway Redis    │
-├─────────────┼─────────────────┼─────────────────┼──────────────────┤
-│ Stripe      │ Test mode       │ Test mode       │ Live mode        │
-├─────────────┼─────────────────┼─────────────────┼──────────────────┤
-│ Slack       │ Test workspace  │ Test workspace  │ Production       │
-├─────────────┼─────────────────┼─────────────────┼──────────────────┤
-│ Brevo       │ Sandbox         │ Sandbox         │ Production       │
-└─────────────┴─────────────────┴─────────────────┴──────────────────┘
-```
-
----
-
-## 10. DÉCISIONS ARCHITECTURALES
+### Pourquoi les guardrails sont sync (middleware) ?
+Un guardrail avec action=block doit empêcher l'event AVANT qu'il soit stocké. Si c'était async, l'event serait déjà en DB. Le check doit être rapide (< 5ms) d'où le cache Redis des règles.
 
 ### Pourquoi un monorepo ?
-Un seul repo avec backend/, frontend/, sdk/. Plus simple à gérer pour une équipe de 1. Les types sont partagés, les deploys sont synchronisés, Claude Code a tout le contexte en un seul endroit.
-
-### Pourquoi des agrégations pré-calculées ?
-La table events va grossir vite (100K+ lignes/mois dès le début). Querier directement pour le dashboard serait lent. Les agrégations horaires et daily sont calculées par Celery toutes les 5 minutes.
-
-### Pourquoi WebSocket + Redis Pub/Sub ?
-Le dashboard doit montrer les events en temps réel sans polling. Redis Pub/Sub est le bridge entre le worker qui insère l'event et le WebSocket qui le pousse au frontend. Chaque org a son channel pour l'isolation.
-
-### Pourquoi z-score pour l'anomaly detection ?
-C'est simple, efficace, et ne nécessite pas de ML. Un z-score > 3 (3 sigma) capture les vrais spikes sans trop de faux positifs. La baseline se met à jour en continu (moving average) pour s'adapter aux patterns de chaque agent.
-
-### Pourquoi le budget check dans un middleware ?
-Le check doit se faire AVANT l'insertion de l'event, pas après. C'est un middleware qui bloque la requête si le budget est atteint. Le counter Redis est atomique (INCRBYFLOAT) pour éviter les race conditions.
+Un seul repo avec backend/, frontend/, sdk/. Plus simple pour Claude Code, types partagés, deploys synchronisés.
 
 ### Pourquoi pas de proxy ?
-Notre position marché est d'être simple et non-intrusif. Un proxy crée un point de défaillance, complexifie le setup, et nous met en compétition directe avec Helicone/Portkey. On track les métadonnées, pas le trafic.
-
-### Pourquoi Supabase Auth plutôt que custom ?
-C'est le launch — on ne reinvente pas l'auth. Supabase Auth gère email + Google OAuth + JWT + RLS. On peut migrer plus tard si nécessaire.
-
-### Pourquoi Celery + Redis plutôt que des background tasks FastAPI ?
-Les alertes, anomalies, forecasts et agrégations doivent survivre à un restart du serveur. Celery avec Redis comme broker donne de la fiabilité, du retry, du scheduling (beat pour les tâches périodiques).
+Notre position marché. On ne touche pas au trafic réseau. On capture les métadonnées et les traces via le SDK/décorateur.
 
 ---
 
-## 11. CONTRAINTES DE PERFORMANCE
+## 8. CONTRAINTES DE PERFORMANCE
 
 ```
-Endpoint POST /v1/track :
+POST /v1/track :
     - Latence p50 : < 30ms
-    - Latence p95 : < 50ms
+    - Latence p95 : < 50ms (incluant guardrail check + PII scan)
     - Latence p99 : < 100ms
     - Throughput : 5000 req/s par instance
+
+Guardrail check (sync middleware) :
+    - Latence max : < 5ms (règles en cache Redis)
+
+PII scan (sync middleware) :
+    - Latence max : < 10ms (regex patterns en mémoire)
 
 Dashboard API :
     - Latence p50 : < 200ms
     - Latence p95 : < 500ms
 
+Replay session load :
+    - Latence p50 : < 300ms (session complète avec steps)
+    - Latence p95 : < 800ms
+
 WebSocket :
     - Délai event → dashboard : < 500ms
     - Max connexions par instance : 1000
 
+Smart Alert diagnosis :
+    - Délai : < 30s (async, Claude API call)
+
 Agrégations Celery :
     - Fréquence : toutes les 5 minutes
     - Durée max : < 30s par run
-
-Anomaly detection :
-    - Délai event → anomaly check : < 10s
-
-Forecast :
-    - Recalcul : toutes les heures
-    - Durée max : < 5s par org
-
-Alertes :
-    - Délai entre dépassement et notification : < 2 minutes
-
-Budget check :
-    - Latence ajoutée au POST /v1/track : < 5ms
-    - Zero race condition (Redis atomic ops)
 ```
 
 ---
 
-> **Règle :** Ce fichier est la vérité sur l'architecture d'AgentCostGuard.
+> **Règle :** Ce fichier est la vérité sur l'architecture d'AgentShield.
 > Si une décision archi contredit ce fichier → mettre ce fichier à jour ET logger la décision dans CHANGELOG.md.
