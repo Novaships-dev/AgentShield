@@ -1,4 +1,4 @@
-# CONTEXT.md — AgentCostGuard
+# CONTEXT.md — AgentShield
 
 > Source de vérité du projet. Chaque fichier du repo, chaque décision technique, chaque prompt Claude Code doit être cohérent avec ce document.
 > Dernière mise à jour : mars 2026
@@ -7,19 +7,19 @@
 
 ## 1. EN UNE PHRASE
 
-**"The FinOps platform for AI spending."**
+**"The complete observability suite for AI agents."**
 
-AgentCostGuard track les coûts d'APIs IA en temps réel — par agent, par workflow, par équipe — alerte, protège les budgets, et recommande des optimisations automatiquement.
+AgentShield monitore les coûts, rejoue chaque session pas à pas, et protège les agents avec des guardrails configurables — le tout en une ligne de code.
 
-Tool #1 de Nova (@NovaShips). Premier SaaS de l'écosystème.
+Tool #1 de Nova (@NovaShips). Premier SaaS du portfolio.
 
 ---
 
 ## 2. LE PROBLÈME
 
-Les équipes déploient des agents IA qui appellent des APIs (OpenAI, Anthropic, Gemini). Les coûts spiralent. Personne ne sait quel agent brûle le budget jusqu'à la facture mensuelle.
+Les équipes déploient des agents IA en production. Elles n'ont aucune visibilité.
 
-**Le scénario type :**
+**Douleur 1 — Coûts invisibles**
 
 ```
 Semaine 1 : agent déployé. Tout fonctionne.
@@ -27,118 +27,173 @@ Semaine 2 : l'agent loop sur un edge case. 50 000 appels API.
 Fin du mois : facture de $847. Surprise totale.
 ```
 
-**Ce que les devs font aujourd'hui :**
+**Douleur 2 — Debugging impossible**
 
-- Regarder le dashboard du provider → pas de détail par agent
-- Logger manuellement dans des fichiers → pas scalable, pas temps réel
-- Ne rien faire et subir les surprises → la majorité
+```
+L'agent échoue sur 3% des sessions.
+Personne ne sait à quelle étape.
+Reproduire le bug : impossible sans les données de session.
+```
 
-**Pourquoi c'est douloureux maintenant :**
+**Douleur 3 — Zéro contrôle en production**
 
-- Les APIs IA sont de plus en plus chères à mesure que les usages augmentent
-- Les agents font des milliers d'appels sans supervision
-- 85% des équipes dépassent leur budget IA de >10% par mois
-- Les providers ne fournissent aucune granularité au niveau agent
+```
+Un agent répond à des questions hors scope.
+Un autre expose des données PII.
+Un troisième dépasse le budget sans que personne ne s'en rende compte.
+Kill switch inexistant.
+```
+
+**Ce que les équipes font aujourd'hui :**
+
+- Dashboard du provider (OpenAI, Anthropic) → pas de détail par agent, pas de replay, pas de guardrails
+- Logger manuellement → non scalable, réactif, pas temps réel
+- Rien → la majorité — et ils subissent les conséquences
+
+**Pourquoi maintenant :**
+
+- Les agents IA passent du prototype à la production en masse en 2026
+- Les coûts API explosent avec l'usage
+- Les exigences compliance (PII, audit, logs) deviennent obligatoires dans les équipes 10+
 - 70% des CIOs citent "AI cost unpredictability" comme frein principal à l'adoption
+- Aucun outil standalone ne couvre les trois dimensions (Monitor + Replay + Protect)
 
 ---
 
 ## 3. LA SOLUTION
 
-Plateforme FinOps IA self-serve qui se branche en 2 minutes.
+**AgentShield — 3 modules, 1 SDK, 1 ligne de code.**
 
-**Ce qu'il fait :**
-
+### Module 1 — Monitor
 - Track les coûts en temps réel par agent, par workflow, par user, par équipe, par jour
-- Alerte Slack/email quand un seuil est dépassé — avec anomaly detection automatique
-- Protège les budgets avec des caps automatiques (auto-freeze quand le budget max est atteint)
-- Projette les coûts de fin de mois en temps réel ("à ce rythme, ta facture sera de $X")
-- Recommande des optimisations automatiquement ("cet agent pourrait tourner sur un modèle moins cher et économiser $Y/mois")
-- Calcule le coût par session/workflow complet (pas juste par appel API)
-- Attribue les coûts par équipe pour le reporting investisseurs/management
-- Génère des rapports PDF pour les stakeholders
-- Offre un Slack bot interactif pour consulter les coûts sans quitter Slack
+- Alertes Slack/email configurables par seuil
+- Anomaly detection automatique (baseline glissante, spike detection)
+- Cost forecast / projection fin de mois en temps réel
+- Smart Alerts : diagnostic IA de la cause probable + suggestion de fix
+- Cost Autopilot : recommandations automatiques de modèle avec économies chiffrées
+- Rapports PDF pour les stakeholders
+
+### Module 2 — Replay
+- Timeline visuelle step-by-step de chaque session d'agent
+- Voir chaque input, chaque output, chaque appel API dans l'ordre exact
+- Filtrer par session ID, par agent, par date, par statut (succès/échec)
+- Partager une session en URL pour le debug d'équipe
+- Mesurer la durée et le coût de chaque step
+- Identifier les steps qui coûtent le plus ou qui échouent le plus
+
+### Module 3 — Protect
+- Guardrails configurables (topics, mots-clés, catégories interdites)
+- PII redaction automatique (emails, téléphones, cartes de crédit, SSN)
+- Budget caps par agent avec kill switch automatique
+- Compliance mode : logs immuables pour audit GDPR
+
+### Killer features transversales
+- **Smart Alerts** : quand une alerte se déclenche, l'IA diagnostique la cause probable et suggère un fix — pas juste une notification
+- **Cost Autopilot** : analyse les patterns de coût et recommande automatiquement quel modèle utiliser par type de tâche
+- **Setup 1 ligne de code** : pas de proxy, pas de redirection DNS, pas de réécriture d'architecture
+- **UI/UX premium dark mode** : classe mondiale, pas un dashboard analytics de 2018
+- **Framework-agnostic** : LangChain, CrewAI, AutoGen, LlamaIndex, custom — aucune importance
+- **Compliance-ready** : logs immuables, exports GDPR, audit trail complet
 
 **Ce qu'il ne fait PAS :**
 
 - Il n'est PAS un proxy complet (pas Helicone)
-- Il ne fait PAS du replay visuel (c'est AgentReplay — Tool #2)
-- Il ne fait PAS de guardrails de sécurité (c'est AgentGate — Tool #3)
-
-**L'analogie :** Mint pour les dépenses IA. Simple, beau, actionnable, indispensable.
+- Il ne route PAS les requêtes (pas Portkey)
+- Il ne fait PAS d'évaluation de modèles (pas Braintrust)
 
 ---
 
 ## 4. ICP — QUI ACHÈTE
 
-### Persona primaire — Le dev solo / indie hacker (60% des clients)
+### Persona primaire — L'équipe IA 3-30 personnes (60% des clients)
 
-- Développeur seul ou en équipe de 2-5
-- Déploie 1-5 agents IA en production
-- Budget serré — chaque dollar compte
-- Utilise OpenAI ou Anthropic API directement
-- Pain : pas de visibilité sur ce que chaque agent coûte
-- Willingness to pay : €19-49/mois
-- Canal : Twitter, Reddit r/LocalLLaMA, IndieHackers
+- Startup ou scale-up avec des agents en production
+- 3-30 développeurs, dont au moins 1 responsable IA
+- Budget IA non maîtrisé ou incidents de prod récents
+- Besoin de reporting vers management ou investisseurs
+- Pain : coûts non contrôlés + debugging long + pas de guardrails
+- Willingness to pay : €99-199/mois
+- Canal : Twitter, Product Hunt, LinkedIn, IndieHackers
 
-### Persona secondaire — La startup early-stage (30% des clients)
-
-- Équipe de 5-20 personnes
-- Plusieurs agents en production
-- Investisseurs qui demandent des rapports de coûts
-- Pain : impossible de savoir quel agent est rentable
-- Willingness to pay : €49-99/mois
-- Canal : Product Hunt, cold outreach LinkedIn/Twitter
-
-### Persona tertiaire — L'agence IA (10% des clients)
+### Persona secondaire — L'agence IA (30% des clients)
 
 - Agence qui deploy des agents pour des clients
-- Doit facturer les coûts IA à ses clients
-- Pain : impossible de répartir les coûts par client
-- Willingness to pay : €99/mois (plan Team)
-- Canal : Bouche à oreille, partnerships
+- Doit facturer les coûts IA et les justifier
+- Gère 10-50 agents différents pour des clients différents
+- Pain : impossible de répartir les coûts + pas de rapport + risque contractuel
+- Willingness to pay : €199/mois (plan Team)
+- Canal : Bouche à oreille, partnerships, LinkedIn
+
+### Persona tertiaire — Dev solo / indie hacker (10% des clients, 40% des free users)
+
+- Développeur seul ou équipe de 2-3
+- Déploie 1-5 agents IA
+- Pain : dépassements de fin de mois + pas de visibilité
+- Willingness to pay : €0-49/mois
+- Canal : Twitter, Reddit r/LocalLLaMA, IndieHackers
+- Rôle stratégique : Free tier = acquisition, pas cible principale
 
 ---
 
 ## 5. PRICING
 
-| Plan | Prix/mois | Agents | Requêtes/mois | Historique | Alertes | Features premium |
-|------|-----------|--------|---------------|------------|---------|-----------------|
-| Free | €0 | 1 | 10 000 | 7 jours | Non | Non |
-| Starter | €19 | 5 | 100 000 | 30 jours | Slack + email | Forecast + anomaly detection |
-| Pro | €49 | Illimité | 500 000 | 90 jours | Illimitées | Tout Starter + recommandations IA + budget caps + session costing + webhooks |
-| Team | €99 | Illimité | Illimité | 1 an | Multi-user | Tout Pro + team attribution + audit log + Slack bot + rapports PDF + dashboard custom |
+| Plan | Prix/mois | Agents | Modules inclus | Notes |
+|------|-----------|--------|----------------|-------|
+| Free | €0 | 1 | Monitor only | Acquisition |
+| Starter | €49 | 5 | Monitor + Replay | Cible principale |
+| Pro | €99 | Illimité | Monitor + Replay + Protect | Full suite |
+| Team | €199 | Illimité | Tout + multi-user + compliance + PDF | Agences et équipes |
 
-**ARPU cible :** €25/mois (mix Starter/Pro)
+**ARPU cible :** €70/mois (mix Starter/Pro)
 **Conversion free → paid cible :** 8%+
 **Churn cible :** <5%/mois
 
 ---
 
-## 6. FEATURES PAR CATÉGORIE
+## 6. FEATURES PAR MODULE ET PAR PLAN
 
-### Core (tous les plans)
-- Dashboard temps réel (WebSocket)
-- Tracking par agent / workflow / provider / modèle
-- Onboarding guidé interactif (SDK → premier event → dashboard)
+### Module Monitor (Free+)
 
-### Alerting (Starter+)
-- Alertes seuils Slack + email
-- Anomaly detection automatique (baseline glissante, spike detection)
-- Cost forecast / projection fin de mois
+| Feature | Free | Starter | Pro | Team |
+|---------|------|---------|-----|------|
+| Dashboard temps réel (WebSocket) | ✅ | ✅ | ✅ | ✅ |
+| Tracking par agent/workflow/provider/modèle | ✅ (1 agent) | ✅ (5) | ✅ (∞) | ✅ (∞) |
+| Onboarding guidé interactif | ✅ | ✅ | ✅ | ✅ |
+| Historique | 7 jours | 30 jours | 90 jours | 1 an |
+| Alertes seuils (Slack + email) | ❌ | ✅ | ✅ | ✅ |
+| Anomaly detection automatique | ❌ | ✅ | ✅ | ✅ |
+| Cost forecast / projection EOM | ❌ | ✅ | ✅ | ✅ |
+| Smart Alerts (diagnostic IA) | ❌ | ❌ | ✅ | ✅ |
+| Cost Autopilot (recommandations modèle) | ❌ | ❌ | ✅ | ✅ |
+| Session / workflow costing | ❌ | ❌ | ✅ | ✅ |
+| Webhooks sortants | ❌ | ❌ | ✅ | ✅ |
+| Rapports PDF | ❌ | ❌ | ❌ | ✅ |
+| Team cost attribution | ❌ | ❌ | ❌ | ✅ |
+| Audit log | ❌ | ❌ | ❌ | ✅ |
+| Slack bot interactif | ❌ | ❌ | ❌ | ✅ |
+| Dashboard personnalisable | ❌ | ❌ | ❌ | ✅ |
 
-### Protection (Pro+)
-- Budget caps par agent avec auto-freeze
-- Recommandations d'optimisation IA (Claude API)
-- Session / workflow costing
-- Webhooks sortants (connecter à ses propres outils)
+### Module Replay (Starter+)
 
-### Enterprise-lite (Team)
-- Team cost attribution (coûts par équipe / membre)
-- Audit log (qui a fait quoi, quand)
-- Slack bot interactif (/costguard status, /costguard agent X)
-- Rapports PDF exportables
-- Dashboard personnalisable (widgets drag-and-drop)
+| Feature | Free | Starter | Pro | Team |
+|---------|------|---------|-----|------|
+| Session timeline step-by-step | ❌ | ✅ | ✅ | ✅ |
+| Inputs/outputs de chaque step | ❌ | ✅ | ✅ | ✅ |
+| Filtre par session/agent/date/statut | ❌ | ✅ | ✅ | ✅ |
+| Coût et durée par step | ❌ | ✅ | ✅ | ✅ |
+| Partage de session par URL | ❌ | ❌ | ✅ | ✅ |
+| Comparaison de sessions | ❌ | ❌ | ✅ | ✅ |
+| Annotations et commentaires | ❌ | ❌ | ❌ | ✅ |
+
+### Module Protect (Pro+)
+
+| Feature | Free | Starter | Pro | Team |
+|---------|------|---------|-----|------|
+| Budget caps par agent + kill switch | ❌ | ❌ | ✅ | ✅ |
+| Guardrails configurables (topics/keywords) | ❌ | ❌ | ✅ | ✅ |
+| PII redaction automatique | ❌ | ❌ | ✅ | ✅ |
+| Compliance mode (logs immuables) | ❌ | ❌ | ❌ | ✅ |
+| Export GDPR | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
@@ -147,13 +202,13 @@ Plateforme FinOps IA self-serve qui se branche en 2 minutes.
 | Layer | Technologie | Notes |
 |-------|-------------|-------|
 | Backend | FastAPI — Python 3.12+ | |
-| Queue | Celery + Redis | Jobs de tracking async |
+| Queue | Celery + Redis | Jobs async (alertes, replay, agrégation) |
 | WebSocket | FastAPI WebSocket + Redis Pub/Sub | Dashboard temps réel |
-| Frontend | Next.js 14 + TypeScript + Tailwind + shadcn/ui | |
-| Database | Supabase PostgreSQL + RLS | |
+| Frontend | Next.js 14 + TypeScript + Tailwind + shadcn/ui | Dark mode exclusivement |
+| Database | Supabase PostgreSQL + RLS | Sessions, traces, métriques |
 | Auth | Supabase Auth (email + Google OAuth) | |
 | Paiements | Stripe (compte Nova séparé) | Checkout + Portal + Webhooks |
-| IA | Claude API — claude-sonnet-4-20250514 | Recommandations d'optimisation |
+| IA | Claude API — claude-sonnet-4-6 | Smart Alerts + Cost Autopilot |
 | Slack | Slack API (OAuth + slash commands + webhooks) | Bot interactif + alertes |
 | Deploy backend | Railway | |
 | Deploy frontend | Vercel | |
@@ -191,82 +246,98 @@ Plateforme FinOps IA self-serve qui se branche en 2 minutes.
 
 | Concurrent | Type | Forces | Faiblesses | Notre avantage |
 |------------|------|--------|------------|---------------|
-| Helicone | Proxy complet | Riche en features, open-source | Complexe, proxy = point de défaillance | Plus simple, pas de proxy |
-| Portkey | Proxy + routing | Multi-provider, budget controls | Orienté routing, pricing par logs | Spécialisé cost tracking, pricing simple |
-| LangSmith | Observabilité | Traces complètes, évals | Lock-in LangChain, complexe | Framework-agnostic, focus coûts |
-| Dashboard provider | Natif | Zéro setup | Pas de détail par agent, pas d'alerte | Granularité + alertes + protection |
+| LangSmith | Observabilité | Traces riches, intégration LangChain | Lock-in LangChain, $39/seat, pas de guardrails | Framework-agnostic, 1 ligne, protect inclus |
+| Helicone | Proxy monitoring | Riche, open-source | Proxy = point de défaillance, complexe | Pas de proxy, setup immédiat |
+| Langfuse | Observabilité OSS | Gratuit, self-host | Basique, pas de guardrails, pas d'alertes IA | Smart Alerts, Cost Autopilot, UI premium |
+| Braintrust | Enterprise | Complet, eval inclus | Prix enterprise, trop complexe pour 3-30 | Onboarding rapide, prix abordable |
+| Portkey | Proxy + routing | Multi-provider, budget controls | Orienté routing, pricing par logs | Spécialisé observabilité, pas de proxy |
 
-**Position :** AgentCostGuard est la seule plateforme **standalone**, **simple**, et **proactive** dédiée au FinOps IA. Les concurrents font du cost tracking comme feature secondaire dans un outil plus large. Nous, c'est notre unique focus — et on le fait mieux.
+**Position :** AgentShield est la seule suite qui combine Monitor + Replay + Protect en un seul produit, framework-agnostic, avec une UI premium et un setup en 1 ligne.
 
 **Ce qui nous différencie de TOUS les concurrents :**
 
-- Budget caps avec auto-freeze (protection active, pas juste de l'observabilité)
-- Anomaly detection sans configuration (value from day 1)
-- Cost forecast en temps réel (actionnable, pas juste historique)
-- Recommendations automatiques de modèle (économies concrètes chiffrées)
-- Slack bot interactif (ancré dans le workflow, pas juste un dashboard)
-- Setup en 2 minutes sans proxy (pas de point de défaillance ajouté)
+- 3 modules en 1 produit (personne d'autre ne combine les trois)
+- Smart Alerts avec diagnostic IA (pas juste une notification)
+- Cost Autopilot (économies chiffrées automatiques)
+- PII redaction + guardrails (protect intégré, pas un add-on)
+- Setup 1 ligne de code, pas de proxy
+- Framework-agnostic (LangChain, CrewAI, AutoGen, custom)
+- UI dark mode premium (pas un dashboard 2018)
 
-**Conséquence technique :** On ne build JAMAIS de feature qui transforme AgentCostGuard en proxy. On reste une plateforme FinOps qui se branche sur l'existant.
+**Conséquence technique :** On ne build JAMAIS de feature qui transforme AgentShield en proxy. On reste une suite d'observabilité qui se branche sur l'existant.
 
 ---
 
 ## 10. INTÉGRATION
 
-### Option 1 — SDK Python (recommandée)
+### Option 1 — SDK Python (recommandée, 1 ligne)
 
 ```python
 # Installation
-pip install agentcostguard
+pip install agentshield
 
-# Usage basique
-from agentcostguard import track
+# Usage basique — décorateur
+from agentshield import shield
 
-@track(agent="my-agent-name")
+@shield(agent="my-agent")
 def call_openai(prompt):
     response = openai.chat.completions.create(...)
     return response
 
-# Usage avec workflow/session
-from agentcostguard import track, session
+# Usage avec session (pour Replay)
+from agentshield import shield, session
 
-with session("support-ticket-123"):
-    @track(agent="classifier")
+with session("ticket-123"):
+    @shield(agent="classifier", step=1)
     def classify(text):
         ...
 
-    @track(agent="responder")
+    @shield(agent="responder", step=2)
     def respond(category):
         ...
 
-# Budget cap — le SDK refuse les appels si le budget est atteint
-from agentcostguard import track, set_budget
+# Budget cap + kill switch (Protect)
+from agentshield import shield, set_budget
 
 set_budget(agent="my-agent", max_usd=50.0, period="monthly")
 
-@track(agent="my-agent")
+@shield(agent="my-agent")
 def call_openai(prompt):
     # Lève BudgetExceededError si le cap est atteint
     response = openai.chat.completions.create(...)
     return response
 ```
 
-### Option 2 — API directe
+### Option 2 — Middleware frameworks
+
+```python
+# LangChain
+from agentshield.integrations import LangChainCallback
+callbacks = [LangChainCallback(api_key="YOUR_KEY", agent="my-agent")]
+
+# CrewAI
+from agentshield.integrations import CrewAICallback
+```
+
+### Option 3 — API directe
 
 ```python
 import requests
 
-requests.post("https://api.agentcostguard.io/v1/track", json={
-    "agent": "my-agent-name",
+requests.post("https://api.agentshield.io/v1/track", json={
+    "agent": "my-agent",
     "model": "gpt-4o",
     "input_tokens": 1250,
     "output_tokens": 340,
-    "cost_usd": 0.0234,
-    "session_id": "support-ticket-123"
+    "session_id": "ticket-123",
+    "step": 3,
+    "step_name": "classify",
+    "input_text": "Customer says: I need help with billing",
+    "output_text": "Category: billing_inquiry"
 }, headers={"Authorization": f"Bearer {API_KEY}"})
 ```
 
-**Temps d'intégration :** 2-5 minutes (SDK), 10-15 minutes (API directe).
+**Temps d'intégration :** 2 minutes (SDK), 10 minutes (API directe).
 
 ---
 
@@ -276,56 +347,48 @@ requests.post("https://api.agentcostguard.io/v1/track", json={
 
 | Métrique | Cible |
 |----------|-------|
-| Signups jour J | 50+ |
-| Clients payants M1 | 10-15 |
-| MRR fin M1 | €200-400 |
+| Signups jour J | 100+ |
+| Clients payants M1 | 15-25 |
+| MRR fin M1 | €500-1 000 |
 | Conversion free → paid | >5% |
 
 ### Phase 2 — Traction (Mai-Juin 2026)
 
 | Métrique | Cible |
 |----------|-------|
-| Clients payants | 60-100 |
-| MRR | €1 500-2 500 |
+| Clients payants | 80-150 |
+| MRR | €3 000-6 000 |
 | Churn mensuel | <5% |
 | NPS | >40 |
 
-### Phase 3 — Validation (Juin 2026)
+### Kill criteria / Go criteria
 
-| Métrique | Cible go/no-go |
-|----------|---------------|
-| MRR | €2 000+ |
-| Churn | <5% |
-| Si atteint | Go AgentReplay (Tool #2) |
-| Si non atteint | Itérer sur AgentCostGuard |
+| Situation après 12 semaines | Décision |
+|-----------------------------|----------|
+| < 200€ MRR | Kill — documenter, passer au suivant |
+| 200-500€ MRR | Itérer — pas de kill, pas d'accélération |
+| > 500€ MRR | Double down |
+| > 2 000€ MRR | All-in — focus total |
 
 ---
 
 ## 12. ÉCOSYSTÈME NOVA
 
-AgentCostGuard est le Tool #1. Il ouvre la porte aux deux suivants.
+AgentShield est le Tool #1. Il est la porte d'entrée du portfolio de 6 SaaS.
 
 ```
-AgentCostGuard (track les coûts)
-    → même SDK
-    → AgentReplay (comprend ce qui se passe)
-    → même base clients
-    → AgentGate (protège les agents)
+AgentShield Monitor détecte un coût anormal
+    → Smart Alert : "Your agent spent 3x more than usual on step 4"
+    → Replay s'ouvre automatiquement sur le step 4
+
+AgentShield Replay identifie le problème
+    → "This prompt is 4x longer than needed — Cost Autopilot recommends GPT-4o-mini here"
+
+AgentShield Protect empêche la récurrence
+    → Budget cap automatique + kill switch + PII redaction
 ```
 
-**Cross-sell intégré au produit :**
-
-```
-AgentCostGuard détecte un coût anormal
-    → Banner : "Want to know WHY this agent is expensive?"
-    → Cross-sell AgentReplay
-
-AgentCostGuard détecte un dépassement de budget
-    → Banner : "Want to prevent this automatically?"
-    → Cross-sell AgentGate
-```
-
-Le SDK est conçu pour être partagé — quand AgentReplay sort, l'utilisateur d'AgentCostGuard active une feature, pas une nouvelle intégration.
+Le SDK est conçu comme un package unique. Les 3 modules sont activés au niveau du plan — un seul import, un seul décorateur.
 
 ---
 
@@ -333,21 +396,22 @@ Le SDK est conçu pour être partagé — quand AgentReplay sort, l'utilisateur 
 
 Ces règles s'appliquent à tout le code, toute la doc, tout le contenu généré par Claude Code.
 
-1. **Zéro proxy.** AgentCostGuard n'intercepte JAMAIS le trafic API. On track les métadonnées uniquement (tokens, coût, agent name). Jamais le contenu des prompts.
-2. **Zéro données sensibles.** On ne stocke ni les prompts, ni les réponses des APIs IA. Uniquement les métadonnées de coût.
-3. **Zéro feature creep.** Si une feature ne sert pas directement le FinOps IA (cost tracking, alerting, protection, optimisation), elle n'existe pas.
+1. **Zéro proxy.** AgentShield n'intercepte JAMAIS le trafic API. On capture les métadonnées et les traces, pas le trafic réseau.
+2. **Zéro données sensibles non consenties.** Les inputs/outputs sont capturés pour Replay UNIQUEMENT si le plan le permet. PII redaction appliquée par défaut. Le user peut désactiver la capture des contenus.
+3. **Zéro feature creep.** Si une feature ne sert pas Monitor, Replay, ou Protect, elle n'existe pas.
 4. **Zéro mention d'identité réelle.** Jamais de référence à FoundryTwo, Fabrice, ou toute autre identité dans le code, les commentaires, les commits, les configs.
 5. **Zéro chiffre inventé.** Les données de démo utilisent des chiffres réalistes mais clairement marqués comme exemples.
-6. **Zéro dépendance inutile.** Chaque package ajouté au projet doit être justifié. On garde la stack légère.
-7. **Zéro shortcut sécurité.** RLS Supabase activé sur chaque table. Auth vérifié sur chaque endpoint. API keys hashées en base.
-8. **SDK first.** L'expérience développeur du SDK est la priorité #1. Si le SDK est pénible à utiliser, le produit est mort.
-9. **Anglais uniquement.** Tout le code, les commentaires, les messages d'erreur, l'UI, la doc publique — en anglais.
-10. **Mobile-friendly.** Le dashboard doit être lisible sur mobile. Pas d'excuse.
+6. **Zéro dépendance inutile.** Chaque package ajouté doit être justifié. Stack légère.
+7. **Zéro shortcut sécurité.** RLS Supabase sur chaque table. Auth vérifié sur chaque endpoint. API keys hashées. PII redaction par défaut.
+8. **SDK first.** L'expérience développeur du SDK est la priorité #1. Si `@shield()` est pénible à utiliser, le produit est mort.
+9. **Anglais uniquement.** Tout le code, les commentaires, les messages d'erreur, l'UI, la doc publique.
+10. **Mobile-friendly.** Le dashboard doit être lisible sur mobile.
 11. **Value from day 1.** Un utilisateur free doit voir de la valeur dès le premier event tracké — anomaly detection et forecast marchent sans configuration.
-12. **Proactif, pas passif.** AgentCostGuard ne se contente pas de montrer des données. Il alerte, protège, recommande, projette. C'est ce qui le rend indispensable.
+12. **Proactif, pas passif.** AgentShield ne se contente pas de montrer des données. Il diagnostique, protège, recommande. C'est ce qui le rend indispensable.
+13. **Privacy by default.** PII redaction activée par défaut. Le user doit explicitement choisir de stocker les contenus bruts.
 
 ---
 
-> **Règle de mise à jour :** Ce fichier est la vérité sur AgentCostGuard.
+> **Règle de mise à jour :** Ce fichier est la vérité sur AgentShield.
 > Si une décision produit contredit ce fichier → mettre ce fichier à jour ET logger la décision dans CHANGELOG.md avec le raisonnement.
 > Le produit évolue. La documentation aussi.
