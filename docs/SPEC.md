@@ -219,7 +219,7 @@ or reduce prompt context to <800 tokens.
 
 ## 6. ANOMALY DETECTION
 
-### Fonctionnement identique au spec AgentCostGuard
+### Fonctionnement standard (voir sections précédentes)
 - Phase d'apprentissage 7 jours → baseline mean + stddev
 - z-score > 3 = spike, z < -2 = drop
 - Automatique pour tous les agents dès Starter, pas de config
@@ -229,7 +229,7 @@ or reduce prompt context to <800 tokens.
 
 ## 7. COST FORECAST
 
-### Identique au spec AgentCostGuard
+### Fonctionnement standard
 - Linear regression sur coûts daily du mois
 - Recalcul Celery toutes les heures
 - Min 3 jours pour afficher
@@ -240,7 +240,7 @@ or reduce prompt context to <800 tokens.
 
 ## 8. BUDGET CAPS + KILL SWITCH
 
-### Identique au spec AgentCostGuard, avec ajout :
+### Fonctionnement standard, avec ajout :
 - Kill switch = mode Freeze renommé pour AgentShield
 - Quand kill switch activé → l'agent passe en 🔴 Frozen
 - Le SDK lève `BudgetExceededError`
@@ -564,7 +564,7 @@ En tant que dev, je veux pouvoir couper un agent immédiatement quand quelque ch
 
 ## 19. TEAM COST ATTRIBUTION
 
-### Identique au spec AgentCostGuard
+### Fonctionnement standard
 - team_label sur events, users, agents (priorité dans cet ordre)
 - Vue /dashboard/team avec pie chart + table par équipe
 - Plan requis : Team
@@ -575,7 +575,7 @@ En tant que dev, je veux pouvoir couper un agent immédiatement quand quelque ch
 ## 20. AUDIT LOG
 
 ### Actions loggées (ajouts AgentShield)
-- Tout ce qui était dans AgentCostGuard PLUS :
+- Inclut toutes les features Monitor, PLUS :
 - Guardrail rule created / updated / deleted
 - PII config updated
 - Kill switch activated / deactivated
@@ -613,7 +613,7 @@ En tant que dev, je veux pouvoir couper un agent immédiatement quand quelque ch
 ## 22. RAPPORTS PDF
 
 ### Contenu (ajouts AgentShield)
-- Tout ce qui était dans AgentCostGuard PLUS :
+- Inclut toutes les features Monitor, PLUS :
 - Top 5 sessions les plus coûteuses du mois (avec lien Replay)
 - Résumé des violations de guardrails
 - Résumé PII : nombre de redactions par type
@@ -674,7 +674,7 @@ En tant que dev, je veux pouvoir couper un agent immédiatement quand quelque ch
 
 ## 26. AUTHENTICATION
 
-### Identique au spec AgentCostGuard
+### Fonctionnement standard
 - Email magic link + Google OAuth (Supabase Auth)
 - Invitations Team par email
 - Rôles : owner, admin, member
