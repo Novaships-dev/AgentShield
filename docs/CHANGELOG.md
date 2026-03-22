@@ -1,272 +1,131 @@
-# ROADMAP.md — Évolutions AgentShield
+# CHANGELOG.md — Versioning AgentShield
 
-> Ce fichier définit ce qui vient APRÈS le launch V1. Claude Code le lit pour comprendre la direction du produit et ne pas prendre de décisions architecturales qui bloqueraient les évolutions futures.
-> Cohérent avec : CONTEXT.md (vision), SPEC.md (V1 features), TASKS.md (implémentation V1)
+> Ce fichier trace toutes les modifications significatives du projet. Claude Code le met à jour après chaque changement impactant (nouvelle feature, breaking change, fix important, décision d'architecture).
+> Format : [Keep a Changelog](https://keepachangelog.com/) + Semantic Versioning
 > Dernière mise à jour : mars 2026
 
 ---
 
-## 1. TIMELINE
+## Format des entrées
+
+```markdown
+## [version] — YYYY-MM-DD
+
+### Added
+- Nouvelles features
+
+### Changed
+- Modifications de features existantes
+
+### Fixed
+- Corrections de bugs
+
+### Removed
+- Features supprimées
+
+### Security
+- Corrections de sécurité
+
+### Architecture
+- Décisions d'architecture (avec le raisonnement)
+
+### Breaking
+- Changements qui cassent la compatibilité (API, SDK)
+```
+
+### Règles
 
 ```
-V1 — Avril 2026      → Launch (Monitor + Replay + Protect base)
-V1.1 — Mai 2026      → Polish + providers V2 + SDK JS/TS
-V1.2 — Juin 2026     → Protect complet + compliance + intégrations natives
-V2 — Juillet 2026    → Platform features + API publique
-```
-
----
-
-## 2. V1 — LAUNCH (Avril 2026)
-
-Tout ce qui est dans SPEC.md. Le produit complet avec les 3 modules.
-
-```
-Monitor :
-  ✅ Dashboard temps réel (WebSocket)
-  ✅ Tracking par agent/workflow/provider/modèle
-  ✅ Alertes seuils + anomaly detection
-  ✅ Cost forecast
-  ✅ Smart Alerts (diagnostic IA)
-  ✅ Cost Autopilot (recommendations)
-  ✅ Budget caps + kill switch
-  ✅ Session/workflow costing
-
-Replay :
-  ✅ Session timeline step-by-step
-  ✅ Inputs/outputs avec PII redaction
-  ✅ Partage de session par URL
-  ✅ Comparaison de sessions
-
-Protect :
-  ✅ Guardrails (keyword, regex, topic, category)
-  ✅ PII redaction (email, phone, CC, SSN, IP + custom)
-  ✅ Kill switch manuel
-  ✅ Budget caps auto-freeze
-
-SDK :
-  ✅ Python SDK (@shield, session, set_budget)
-  ✅ Intégrations : LangChain, CrewAI, AutoGen, LlamaIndex
-
-Plans :
-  ✅ Free / Starter €49 / Pro €99 / Team €199
-
-Infra :
-  ✅ FastAPI + Next.js + Supabase + Redis + Celery
-  ✅ Railway + Vercel + Cloudflare
-  ✅ CI/CD GitHub Actions
+1. Chaque entrée est une phrase complète en anglais, commençant par un verbe
+2. Les breaking changes sont toujours en section "Breaking" avec instructions de migration
+3. Les décisions d'architecture incluent le POURQUOI (pas juste le quoi)
+4. Les numéros de version suivent semver : MAJOR.MINOR.PATCH
+5. La date est au format ISO 8601 (YYYY-MM-DD)
+6. La version la plus récente est en haut du fichier
+7. "[Unreleased]" regroupe les changements pas encore taggés
 ```
 
 ---
 
-## 3. V1.1 — POLISH (Mai 2026)
+## [Unreleased]
 
-Itérations basées sur les retours utilisateurs des premières semaines.
+### Architecture
+- Rename project from AgentCostGuard to AgentShield — pivot from cost-only tracker to complete observability suite (Monitor + Replay + Protect). Reason: competitive analysis showed gap in the market for a unified tool. Single-module approach was too narrow for the target ICP (teams of 3-30).
+- Adopt 3-module architecture: Monitor (cost tracking, alerts, forecast), Replay (session timeline, debug), Protect (guardrails, PII, kill switch). All modules share the same SDK and data pipeline.
+- Add 19 database tables (up from 14 in AgentCostGuard) to support sessions, guardrails, PII configs, violations, and shared sessions.
+- Price repositioning from €19-99 to €49-199 to reflect the expanded value proposition.
 
-### Nouveaux providers
+### Added
+- Complete documentation scaffold: 28 docs + 21 skills covering every aspect of the project.
+- CONTEXT.md — project source of truth (13 sections)
+- ARCH.md — technical architecture (19 tables, 6 data flows, 4 auth systems)
+- SPEC.md — functional specifications (27 features across 3 modules)
+- CLAUDE.md — Claude Code instructions
+- CONVENTIONS.md — code standards (Python, TypeScript, SQL, API, Git)
+- ENV.md — all environment variables with per-environment values
+- ERRORS.md — error catalogue (60+ error codes with HTTP status and SDK mapping)
+- SECURITY.md — complete security spec (RLS policies, roles, rate limiting, PII, encryption)
+- MIGRATIONS.md — database migration strategy with 23 initial migrations
+- DEPLOY.md — deployment configuration (Railway, Vercel, Cloudflare, CI/CD)
+- QUEUE.md — Celery/Redis task queue (11 task categories, 12 scheduled tasks)
+- API.md — complete API documentation (33 endpoints)
+- SDK.md — Python SDK specification (14 sections)
+- WEBHOOKS.md — inbound + outbound webhooks (Stripe, Slack, client webhooks)
+- PRICING-ENGINE.md — AI model pricing engine (14 models V1, aliases, fallbacks)
+- INTEGRATIONS.md — all third-party services (10 services documented)
+- REPLAY.md — Replay module technical spec (sessions, timeline, sharing, comparison)
+- PROTECT.md — Protect module technical spec (guardrails, PII, kill switch, compliance)
+- FRAMEWORKS.md — framework integrations (LangChain, CrewAI, AutoGen, LlamaIndex)
+- UI.md — design system (glassmorphism, dark mode, components, layouts, animations)
+- COPY.md — all user-facing text (landing, onboarding, dashboard, emails, Slack, SDK errors)
+- ANALYTICS.md — event tracking (25+ Plausible events, 15 internal metrics, funnel)
+- TESTS.md — testing strategy (pytest, Vitest, Playwright, coverage targets)
+- MONITORING.md — operational monitoring (Sentry, health checks, 7 runbooks)
+- BACKUP.md — backup and restore (daily pg_dump, disaster recovery scenarios)
+- TASKS.md — implementation order (8 sprints, 255h estimated)
+- ROADMAP.md — product evolution (V1 → V1.1 → V1.2 → V2)
+- CHANGELOG.md — this file
 
-```
-Ajout des providers V2 dans la pricing table :
-  - Mistral (mistral-large, mistral-small, mistral-medium)
-  - Cohere (command-r-plus, command-r)
-  - xAI Grok (grok-2, grok-2-mini)
-  - DeepSeek (deepseek-chat, deepseek-coder)
-```
+---
 
-### SDK JavaScript/TypeScript
+## [0.0.1] — 2026-03-22
 
-```typescript
-// npm install agentshield
+### Added
+- Initial repository scaffold with 28 docs + 21 skills (empty placeholders).
+- README.md with project description and repo structure.
+- .devcontainer/devcontainer.json configured for Python 3.12 + Node 20 + Redis.
 
-import { shield, session } from "agentshield";
+### Architecture
+- Decided on monorepo structure: backend/ + frontend/ + sdk/ in a single repository. Reason: solo developer, shared types, synchronized deploys, single context for Claude Code.
+- Decided on FastAPI + Next.js + Supabase + Redis/Celery stack. Reason: Python for AI ecosystem compatibility, Next.js for SSR + Edge, Supabase for managed PostgreSQL + Auth + RLS, Redis for caching + queuing.
 
-const result = await shield({ agent: "my-agent" }, async () => {
-  return await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ role: "user", content: "Hello" }],
-  });
-});
-```
+---
 
-### Améliorations UI
+## Template — Copy this for new releases
 
-```
-- Dashboard loading performance (skeleton → data)
-- Mobile polish (responsive edge cases)
-- Chart interactions (zoom, drill-down)
-- Session timeline : keyboard navigation (←→ entre steps)
-- Onboarding : analytics + amélioration du funnel basé sur les données
-```
+```markdown
+## [x.y.z] — YYYY-MM-DD
 
-### Améliorations backend
+### Added
+-
 
-```
-- Query optimization (slow queries identifiées en V1)
-- Cache warming au démarrage (pas de cold start)
-- Batch insert pour les events haute fréquence (> 1000/min par org)
-- Celery priority queues si nécessaire
+### Changed
+-
+
+### Fixed
+-
+
+### Security
+-
+
+### Architecture
+-
+
+### Breaking
+-
 ```
 
 ---
 
-## 4. V1.2 — PROTECT COMPLET (Juin 2026)
-
-### Topic classification IA
-
-```
-V1 : classification par mots-clés groupés (simple, rapide)
-V1.2 : classification par Claude API (plus précise, async)
-
-Flow :
-  1. Le check sync (middleware) utilise toujours les keyword groups (< 3ms)
-  2. Si un event match un topic "suspect" → Celery task async
-  3. La task appelle Claude API pour classifier précisément
-  4. Si violation confirmée → alerte + log + action rétroactive
-```
-
-### Compliance mode complet
-
-```
-- Export audit log en CSV/JSON
-- Rapport de compliance auto-généré (mensuel)
-- Rétention configurable par org (au-delà du plan)
-- Certification SOC2 readiness (documentation)
-```
-
-### Intégrations natives frameworks
-
-```
-Améliorations des callbacks :
-  - LangGraph support (en plus de LangChain)
-  - CrewAI v2 support
-  - Haystack support
-  - DSPy support
-  - Auto-detection du framework (pas besoin de choisir le bon callback)
-```
-
-### Webhooks améliorés
-
-```
-- Webhook templates (Zapier, Make, n8n)
-- Webhook playground (tester les payloads dans l'UI)
-- Webhook filtering avancé (envoyer uniquement si cost > X)
-```
-
----
-
-## 5. V2 — PLATFORM (Juillet 2026)
-
-### API publique documentée
-
-```
-- Documentation interactive (Swagger/Redoc ou custom)
-- API playground dans l'UI (tester les endpoints live)
-- Versioning explicite (v1 maintenu, v2 pour les breaking changes)
-- Rate limits documentés par endpoint
-- Webhooks event catalog interactif
-```
-
-### Dashboard embeddable
-
-```
-Les agences veulent montrer les coûts à leurs clients.
-→ Iframe embeddable avec token d'accès limité
-→ Vue read-only, branding personnalisable
-→ Filtré par agent/session (le client ne voit que ses données)
-```
-
-### Multi-org (future)
-
-```
-Un user peut appartenir à plusieurs orgs.
-→ Switcher d'org dans le dashboard
-→ Cas d'usage : freelance qui gère plusieurs clients
-→ Architecture : déjà prête (RLS par org_id)
-→ Impact : modifier le flow auth pour supporter le multi-org
-```
-
-### Alertes avancées
-
-```
-- Alertes composites (SI cost > X ET error_rate > Y)
-- Alertes sur les sessions (SI une session coûte > X)
-- Alertes sur le Protect (SI > X violations en 1h)
-- Scheduled digests (résumé quotidien/hebdo par email)
-```
-
-### Benchmarking
-
-```
-"How does your agent compare to others?"
-→ Données anonymisées et agrégées cross-org
-→ "Your support agent costs $0.45/session. Median for similar agents: $0.32."
-→ Feature opt-in (les données ne sont jamais partagées sans consentement)
-```
-
----
-
-## 6. IDÉES BACKLOG (Non planifiées)
-
-```
-- SDK Go
-- SDK Ruby
-- Terraform provider (infrastructure as code)
-- Grafana plugin (exporter les métriques vers Grafana)
-- GitHub Action (track les coûts dans CI/CD)
-- VS Code extension (voir les coûts inline dans l'éditeur)
-- CLI tool (agentshield status depuis le terminal)
-- Prompt optimization suggestions (pas juste model, mais prompt length)
-- A/B testing de prompts (comparer le coût de deux versions)
-- Cost anomaly RCA (Root Cause Analysis automatique)
-- White-label (pour les agences qui veulent leur propre branding)
-```
-
----
-
-## 7. DÉCISIONS ARCHITECTURALES POUR LE FUTUR
-
-### Ce qu'on a déjà préparé
-
-```
-✅ Multi-tenant (organization_id sur tout) → prêt pour multi-org
-✅ RLS strict → prêt pour dashboard embeddable
-✅ API versionnée (/v1/) → prêt pour /v2/ sans casser
-✅ Celery queues séparées → prêt pour scaling workers
-✅ Redis DB séparées → prêt pour scaling Redis
-✅ SDK avec extractors → prêt pour nouveaux providers
-✅ Callback pattern → prêt pour nouveaux frameworks
-✅ PII patterns extensibles → prêt pour nouveaux patterns
-✅ Guardrail types extensibles → prêt pour ML classification
-```
-
-### Ce qu'il faudra migrer
-
-```
-⚠️ Auth single-org → multi-org (migration users table + flow auth)
-⚠️ Celery single instance → distributed (broker configuration)
-⚠️ Supabase Free → Pro (backup auto, PITR, plus de connexions)
-⚠️ Landing Next.js → possiblement séparé (si besoin de perf Edge pure)
-```
-
----
-
-## 8. KILL CRITERIA RAPPEL
-
-```
-Rappel de CONTEXT.md :
-
-| Situation après 12 semaines | Décision |
-|-----------------------------|----------|
-| < 200€ MRR                 | Kill — documenter, passer au Tool #2 |
-| 200-500€ MRR               | Itérer |
-| > 500€ MRR                 | Double down |
-| > 2 000€ MRR               | All-in |
-
-La roadmap V1.1 et V1.2 ne se concrétise QUE si le launch V1 atteint les métriques.
-Pas d'investissement émotionnel dans les features futures si le marché ne valide pas.
-```
-
----
-
-> **Règle :** La roadmap est un plan, pas une promesse. Elle change en fonction des données.
-> Chaque feature future est une hypothèse. Seul le feedback utilisateur et le MRR la valident.
+> **Règle :** Ce fichier est mis à jour à chaque changement significatif. Pas à chaque commit — uniquement quand quelque chose change pour les utilisateurs OU pour l'architecture.
+> Les breaking changes sont annoncés ICI et dans le SDK README au minimum 2 semaines avant d'être appliqués (après v1.0.0).
