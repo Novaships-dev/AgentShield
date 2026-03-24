@@ -1,10 +1,10 @@
-"""API v1 router — routes will be added in Sprint 1+."""
+"""API v1 router."""
 from fastapi import APIRouter
+from app.api.v1 import api_keys
 
-router = APIRouter(prefix="/v1", tags=["v1"])
+router = APIRouter()
+router.include_router(api_keys.router)
 
-# Endpoints will be registered here in subsequent sprints:
+# Additional routers registered when their modules are created:
 # router.include_router(track.router)
 # router.include_router(agents.router)
-# router.include_router(analytics.router)
-# ...

@@ -99,6 +99,10 @@ async def generic_error_handler(request: Request, exc: Exception) -> JSONRespons
 # ---------------------------------------------------------------------------
 
 
+from app.api.v1.router import router as v1_router
+app.include_router(v1_router)
+
+
 @app.get("/health", tags=["system"])
 async def health_check() -> dict[str, Any]:
     from app.utils.redis import get_redis_client
