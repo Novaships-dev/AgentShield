@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
-from typing import list as List
 
 
 class Settings(BaseSettings):
@@ -14,6 +13,9 @@ class Settings(BaseSettings):
 
     # CORS
     cors_origins: list[str] = ["http://localhost:3000"]
+
+    # Feature flags
+    rate_limit_enabled: bool = True
 
     # Supabase (required)
     supabase_url: str
