@@ -210,7 +210,7 @@ def _build_event(
 ) -> TrackEvent:
     """Build a TrackEvent from a response + decorator params."""
     from agentshield._config import get_config
-    from agentshield.sessions import get_session_id, next_step
+    from agentshield.steps import get_session_id, next_step
 
     # Auto-extract from response
     extracted = auto_extract(response) if response is not None else {}
