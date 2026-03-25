@@ -54,7 +54,20 @@ class TrackingService:
         # 5. Compute totals
         total_tokens = (request.input_tokens or 0) + (request.output_tokens or 0)
 
-        # 6. Insert event
+        # 6. PII redaction — before storing, redact both input and output
+        from app.services.pii import PIIRedactionService
+        pii_svc = PIIRedactionService(db=self._db, redis=self._redis)
+
+        input_redacted, input_pii = await pii_svc.redact(org.id, request.input_text)
+        output_redacted, output_pii = await pii_svc.redact(org.id, request.output_text)
+
+        # Merge detected types (dedup)
+        pii_detected = list({*input_pii, *output_pii})
+
+        # store_original=false (default): null out raw text
+        store_original = False  # Sprint 5 will expose this as a config option
+
+        # 7. Insert event
         event_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc).isoformat()
         event_data = {
@@ -76,11 +89,16 @@ class TrackingService:
             "user_label": request.user_label,
             "team_label": request.team_label,
             "metadata": request.metadata,
+            "input_text": request.input_text if store_original else None,
+            "output_text": request.output_text if store_original else None,
+            "input_redacted": input_redacted,
+            "output_redacted": output_redacted,
+            "pii_detected": pii_detected,
             "tracked_at": now,
         }
         self._db.table("events").insert(event_data).execute()
 
-        # 7. UPSERT session if session_id provided
+        # 8. UPSERT session if session_id provided
         if request.session_id:
             from app.services.sessions import SessionService
             session_svc = SessionService(db=self._db, redis=self._redis)
@@ -100,7 +118,7 @@ class TrackingService:
             budget_remaining_usd=None,  # Sprint 4
             budget_status="ok",
             guardrail_violations=[],  # Sprint 5
-            pii_detected=[],  # Sprint 5
+            pii_detected=pii_detected,
             warnings=warnings,
         )
 
