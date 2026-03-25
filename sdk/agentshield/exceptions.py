@@ -27,6 +27,15 @@ class AgentShieldError(Exception):
         self.details = details or {}
         self.request_id = request_id
 
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"code={self.code!r}, "
+            f"message={self.message!r}, "
+            f"status_code={self.status_code}, "
+            f"request_id={self.request_id!r})"
+        )
+
 
 class AuthenticationError(AgentShieldError):
     """Raised when the API key is missing, invalid, or revoked."""
