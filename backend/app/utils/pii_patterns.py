@@ -4,24 +4,31 @@ from __future__ import annotations
 import re
 
 _EMAIL_RE = re.compile(r"[\w.+\-]+@[\w\-]+\.[\w.\-]+", re.ASCII)
-_PHONE_RE = re.compile(r"\+?[\d\s\-()\.\x2D]{7,20}")
 _CREDIT_CARD_RE = re.compile(r"\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b")
 _SSN_RE = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 _IP_RE = re.compile(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b")
+_PHONE_RE = re.compile(
+    r"(?:"
+    r"\+\d{1,3}[\s\-\(]?[\d\s\-\(\)\.]{5,17}\d"
+    r"|\(?\d{3}\)?[\s\-]\d{3}[\s\-]\d{4}"
+    r"|\d{2,4}(?:[\s]\d{2,4}){2,4}"
+    r")"
+)
 
+# Application order: most specific first
 PII_PATTERNS: dict[str, re.Pattern] = {
     "email": _EMAIL_RE,
-    "phone": _PHONE_RE,
-    "credit_card": _CREDIT_CARD_RE,
     "ssn": _SSN_RE,
     "ip_address": _IP_RE,
+    "credit_card": _CREDIT_CARD_RE,
+    "phone": _PHONE_RE,
 }
 
 
 def luhn_check(number: str) -> bool:
     """Validate a credit card number using the Luhn algorithm."""
     digits = re.sub(r"[\s\-]", "", number)
-    if not digits.isdigit():
+    if not digits.isdigit() or len(digits) < 13:
         return False
     total = 0
     reverse = digits[::-1]
@@ -39,15 +46,7 @@ def redact_text(
     text: str,
     active_patterns: list[str] | None = None,
 ) -> tuple[str, list[str]]:
-    """Redact PII from text, returning (redacted_text, detected_types).
-
-    Args:
-        text: Input text to scan.
-        active_patterns: Pattern names to apply. Defaults to all 5.
-
-    Returns:
-        Tuple of (redacted_text, list_of_detected_pii_types).
-    """
+    """Redact PII from text, returning (redacted_text, detected_types)."""
     if not text:
         return text, []
 
