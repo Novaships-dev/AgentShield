@@ -80,6 +80,19 @@ class TrackingService:
         }
         self._db.table("events").insert(event_data).execute()
 
+        # 7. UPSERT session if session_id provided
+        if request.session_id:
+            from app.services.sessions import SessionService
+            session_svc = SessionService(db=self._db, redis=self._redis)
+            await session_svc.upsert_session(
+                org_id=org.id,
+                session_id=request.session_id,
+                agent_id=agent_id,
+                cost_usd=cost_usd,
+                tokens=total_tokens,
+                status=request.status,
+            )
+
         return TrackEventResponse(
             event_id=uuid.UUID(event_id),
             agent=request.agent,
