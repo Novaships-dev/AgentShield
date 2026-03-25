@@ -3,7 +3,7 @@
 __version__ = "0.1.0"
 
 from agentshield._config import configure
+from agentshield.sessions import session
+from agentshield.shield import shield
 
-# shield, session, set_budget will be added in Sprint 2
-
-__all__ = ["configure", "__version__"]
+__all__ = ["shield", "session", "configure", "__version__"]
