@@ -111,6 +111,18 @@ class TrackingService:
                 status=request.status,
             )
 
+        # 9. Publish to WebSocket channel for real-time dashboard updates
+        await self._publish_ws_event(
+            org_id=org.id,
+            event_id=event_id,
+            agent_name=request.agent,
+            model=model or "",
+            cost_usd=cost_usd or 0.0,
+            status=request.status,
+            tracked_at=now,
+            session_id=request.session_id,
+        )
+
         return TrackEventResponse(
             event_id=uuid.UUID(event_id),
             agent=request.agent,
@@ -121,6 +133,50 @@ class TrackingService:
             pii_detected=pii_detected,
             warnings=warnings,
         )
+
+    async def _publish_ws_event(
+        self,
+        org_id: str,
+        event_id: str,
+        agent_name: str,
+        model: str,
+        cost_usd: float,
+        status: str,
+        tracked_at: str,
+        session_id: str | None,
+    ) -> None:
+        """Publish event to Redis Pub/Sub for WebSocket fan-out. Fire-and-forget."""
+        import json
+        channel = f"ws:{org_id}"
+        payload = json.dumps({
+            "type": "new_event",
+            "data": {
+                "event_id": event_id,
+                "agent": agent_name,
+                "model": model,
+                "cost_usd": float(cost_usd),
+                "status": status,
+                "tracked_at": tracked_at,
+            },
+        })
+        try:
+            await self._redis.publish(channel, payload)
+        except Exception:
+            pass  # WebSocket publish is non-critical
+
+        if session_id:
+            # Publish session update as well (cost TBD — simplified for now)
+            session_payload = json.dumps({
+                "type": "session_update",
+                "data": {
+                    "session_id": session_id,
+                    "status": "running",
+                },
+            })
+            try:
+                await self._redis.publish(channel, session_payload)
+            except Exception:
+                pass
 
     async def _get_or_create_agent(self, org: Organization, agent_name: str) -> str:
         """Return existing agent ID or create a new one."""
