@@ -9,6 +9,7 @@ celery_app = Celery(
     backend=settings.redis_url,
     include=[
         "app.workers.tasks_maintenance",
+        "app.workers.tasks_aggregation",
     ],
 )
 
