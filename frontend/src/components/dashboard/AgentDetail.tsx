@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ArrowLeft, TrendingUp, TrendingDown, Zap, DollarSign, Activity, Clock, Film, Snowflake, Power } from 'lucide-react'
 import Link from 'next/link'
 import GlassCard from '@/components/ui/GlassCard'
+import RecommendationCard from '@/components/dashboard/RecommendationCard'
 import CostOverTime from '@/components/charts/CostOverTime'
 import type { Agent } from '@/types/agent'
 import type { AnalyticsResponse } from '@/types/analytics'
@@ -211,6 +212,9 @@ export default function AgentDetail({ agent, analytics }: AgentDetailProps) {
 
       {/* Cost over time chart */}
       <CostOverTime data={timeseries} isLoading={false} />
+
+      {/* Cost Autopilot recommendations for this agent */}
+      <RecommendationCard agentFilter={agent.name} limit={3} />
 
       {/* Sessions section — locked if not on right plan */}
       <GlassCard className="flex items-center gap-4" style={{ padding: '16px 20px' }}>

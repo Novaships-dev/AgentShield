@@ -7,6 +7,7 @@ import CostByAgent from '@/components/charts/CostByAgent'
 import CostByProvider from '@/components/charts/CostByProvider'
 import CostByModel from '@/components/charts/CostByModel'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import RecommendationCard from '@/components/dashboard/RecommendationCard'
 
 export default function DashboardPage() {
   const { data, summary, isLoading } = useAnalytics({ range: '30d' })
@@ -22,6 +23,9 @@ export default function DashboardPage() {
           Real-time overview of your AI agent costs and activity.
         </p>
       </div>
+
+      {/* Cost Autopilot recommendations */}
+      <RecommendationCard limit={1} />
 
       {/* KPI Cards */}
       <StatsCards summary={summary} isLoading={isLoading} />
