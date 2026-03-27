@@ -6,6 +6,71 @@ from app.models.user import Organization
 
 MAX_ALERTS = {"free": 0, "starter": 5, "pro": 20, "team": 20}
 
+PLAN_HIERARCHY = {"free": 1, "starter": 2, "pro": 3, "team": 4}
+PLAN_AGENT_LIMITS = {"free": 1, "starter": 5, "pro": 999_999, "team": 999_999}
+
+
+def require_module(module: str):
+    """Dependency factory: ensure the org's plan includes this module."""
+    from fastapi import Depends, HTTPException
+    from app.dependencies import get_current_org
+
+    async def checker(org: Organization = Depends(get_current_org)) -> Organization:
+        if module not in (org.modules_enabled or []):
+            plan_map = {"replay": "starter", "protect": "pro"}
+            required = plan_map.get(module, "pro")
+            raise HTTPException(
+                status_code=403,
+                detail=f"Module '{module}' requires the {required} plan or higher.",
+            )
+        return org
+
+    return checker
+
+
+def check_agent_limit_for_downgrade(org_id: str, new_plan: str, db) -> None:
+    """Raise HTTPException if org has more agents than the new plan allows."""
+    from fastapi import HTTPException
+    max_allowed = PLAN_AGENT_LIMITS.get(new_plan, 1)
+    if max_allowed >= 999_999:
+        return
+    count_result = (
+        db.table("agents")
+        .select("id", count="exact")
+        .eq("organization_id", org_id)
+        .eq("is_active", True)
+        .execute()
+    )
+    active_count = count_result.count or 0
+    if active_count > max_allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Cannot downgrade: you have {active_count} active agents, "
+                f"but the {new_plan} plan allows only {max_allowed}. "
+                "Please deactivate some agents first."
+            ),
+        )
+
+
+def handle_module_downgrade(org_id: str, old_plan: str, new_plan: str, db) -> None:
+    """Apply side effects on downgrade (deactivate guardrails, etc.). Data is never deleted."""
+    old_rank = PLAN_HIERARCHY.get(old_plan, 0)
+    new_rank = PLAN_HIERARCHY.get(new_plan, 0)
+    if new_rank >= old_rank:
+        return
+
+    from app.services.stripe_service import PLAN_CONFIGS
+    old_modules = set(PLAN_CONFIGS.get(old_plan, {}).get("modules", []))
+    new_modules = set(PLAN_CONFIGS.get(new_plan, {}).get("modules", []))
+    lost = old_modules - new_modules
+
+    if "protect" in lost:
+        try:
+            db.table("guardrail_rules").update({"is_active": False}).eq("organization_id", org_id).execute()
+        except Exception:
+            pass
+
 
 class PlanLimitError(AgentShieldError):
     status_code = 429
