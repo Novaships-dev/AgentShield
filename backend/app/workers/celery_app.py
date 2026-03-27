@@ -13,6 +13,9 @@ celery_app = Celery(
         "app.workers.tasks_alerts",
         "app.workers.tasks_anomaly",
         "app.workers.tasks_forecast",
+        "app.workers.tasks_guardrails",
+        "app.workers.tasks_smart_alerts",
+        "app.workers.tasks_recommendations",
     ],
 )
 
@@ -38,6 +41,8 @@ celery_app.conf.task_routes = {
     "aggregation.*":   {"queue": "aggregation"},
     "forecast.*":      {"queue": "forecast"},
     "reports.*":       {"queue": "reports"},
+    "guardrails.*":    {"queue": "default"},
+    "smart_alerts.*":  {"queue": "alerts"},
     "webhooks.*":      {"queue": "webhooks"},
     "maintenance.*":   {"queue": "default"},
     "recommendations.*": {"queue": "recommendations"},

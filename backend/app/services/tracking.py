@@ -68,6 +68,62 @@ class TrackingService:
             import logging
             logging.getLogger(__name__).warning(f"[budget] check failed: {budget_exc}")
 
+        # 4c. Guardrail evaluation — SYNC (< 5ms), AFTER budget check, BEFORE PII redaction
+        guardrail_violations = []
+        from app.services.guardrails import GuardrailService
+        from app.utils.errors import GuardrailBlockedError
+        guard_svc = GuardrailService(db=self._db, redis=self._redis)
+        try:
+            plan_rank = {"free": 1, "starter": 2, "pro": 3, "team": 4}
+            if plan_rank.get(org.plan, 1) >= 3:  # Pro+ only
+                violations = await guard_svc.evaluate(
+                    org.id, agent_id, request.input_text, request.output_text
+                )
+                has_block = any(v.action == "block" for v in violations)
+                if has_block:
+                    # Log async
+                    try:
+                        from app.workers.tasks_guardrails import log_violation
+                        log_violation.delay([v.to_dict() for v in violations if v.action == "block"], agent_id, request.session_id)
+                    except Exception:
+                        pass
+                    first_block = next(v for v in violations if v.action == "block")
+                    raise GuardrailBlockedError(
+                        f"Request blocked by guardrail rule '{first_block.rule_name}'",
+                        code="guardrail_blocked",
+                        details={"rule_name": first_block.rule_name, "matched": first_block.matched_content},
+                    )
+                # Apply redactions
+                for v in violations:
+                    if v.action == "redact":
+                        if request.input_text:
+                            request.input_text = request.input_text.replace(v.matched_content, f"[BLOCKED:{v.rule_name}]")
+                        if request.output_text:
+                            request.output_text = request.output_text.replace(v.matched_content, f"[BLOCKED:{v.rule_name}]")
+                # Log all violations async (even log/redact)
+                if violations:
+                    try:
+                        from app.workers.tasks_guardrails import log_violation
+                        log_violation.delay([v.to_dict() for v in violations], agent_id, request.session_id)
+                    except Exception:
+                        pass
+                    # WebSocket
+                    for v in violations:
+                        import json
+                        try:
+                            await self._redis.publish(f"ws:{org.id}", json.dumps({
+                                "type": "violation",
+                                "data": {"rule_name": v.rule_name, "agent": request.agent, "action": v.action},
+                            }))
+                        except Exception:
+                            pass
+                guardrail_violations = [{"rule": v.rule_name, "action": v.action} for v in violations]
+        except GuardrailBlockedError:
+            raise
+        except Exception as exc:
+            import logging as _logging
+            _logging.getLogger(__name__).warning(f"[guardrails] eval failed: {exc}")
+
         # 5. Compute totals
         total_tokens = (request.input_tokens or 0) + (request.output_tokens or 0)
 
@@ -111,6 +167,7 @@ class TrackingService:
             "input_redacted": input_redacted,
             "output_redacted": output_redacted,
             "pii_detected": pii_detected,
+            "guardrail_violations": guardrail_violations,
             "tracked_at": now,
         }
         self._db.table("events").insert(event_data).execute()
@@ -171,7 +228,7 @@ class TrackingService:
             cost_usd=cost_usd,
             budget_remaining_usd=budget_remaining_usd,
             budget_status=budget_status,
-            guardrail_violations=[],  # Sprint 5
+            guardrail_violations=[v["rule"] for v in guardrail_violations],
             pii_detected=pii_detected,
             warnings=warnings,
         )
