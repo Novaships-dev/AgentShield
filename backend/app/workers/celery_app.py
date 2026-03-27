@@ -10,6 +10,9 @@ celery_app = Celery(
     include=[
         "app.workers.tasks_maintenance",
         "app.workers.tasks_aggregation",
+        "app.workers.tasks_alerts",
+        "app.workers.tasks_anomaly",
+        "app.workers.tasks_forecast",
     ],
 )
 

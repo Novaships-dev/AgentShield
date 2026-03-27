@@ -111,7 +111,20 @@ class TrackingService:
                 status=request.status,
             )
 
-        # 9. Publish to WebSocket channel for real-time dashboard updates
+        # 9. Dispatch async Celery tasks (fire-and-forget)
+        try:
+            from app.workers.tasks_alerts import check_alert_thresholds
+            check_alert_thresholds.delay(org.id, agent_id)
+        except Exception:
+            pass  # Celery unavailable — non-critical
+
+        try:
+            from app.workers.tasks_anomaly import check_anomaly_event
+            check_anomaly_event.delay(org.id, agent_id, cost_usd or 0.0, total_tokens, request.status)
+        except Exception:
+            pass
+
+        # 10. Publish to WebSocket channel for real-time dashboard updates
         await self._publish_ws_event(
             org_id=org.id,
             event_id=event_id,
