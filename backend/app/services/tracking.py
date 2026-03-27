@@ -137,8 +137,16 @@ class TrackingService:
         # Merge detected types (dedup)
         pii_detected = list({*input_pii, *output_pii})
 
-        # store_original=false (default): null out raw text
-        store_original = False  # Sprint 5 will expose this as a config option
+        # store_original: read from PII config (Pro+ only)
+        store_original = False
+        plan_rank = {"free": 1, "starter": 2, "pro": 3, "team": 4}
+        if plan_rank.get(org.plan, 1) >= 3:
+            try:
+                pii_cfg = self._db.table("pii_configs").select("store_original").eq("organization_id", org.id).maybe_single().execute()
+                if pii_cfg.data:
+                    store_original = bool(pii_cfg.data.get("store_original", False))
+            except Exception:
+                pass
 
         # 7. Insert event
         event_id = str(uuid.uuid4())
