@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     # Brevo (optional — email notifications)
     brevo_api_key: str = ""
 
+    # Anthropic (optional — Smart Alerts, Cost Autopilot)
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-4-6"
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: str | list) -> list[str]:

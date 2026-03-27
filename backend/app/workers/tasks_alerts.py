@@ -69,6 +69,17 @@ def check_alert_thresholds(self, org_id: str, agent_id: str | None = None):
                 _publish_alert_ws(redis, org_id, rule, current_value)
             )
 
+            # 7. Smart Alert diagnosis (Pro+ orgs only)
+            try:
+                from app.utils.supabase import get_supabase_client as _get_db
+                _db = _get_db()
+                org_res = _db.table("organizations").select("plan").eq("id", org_id).maybe_single().execute()
+                if org_res.data and org_res.data.get("plan") in ("pro", "team"):
+                    from app.workers.tasks_smart_alerts import diagnose_alert
+                    diagnose_alert.delay(history_id, org_id)
+            except Exception as _exc:
+                logger.warning(f"[alerts] smart alert dispatch failed: {_exc}")
+
         return {"status": "ok", "rules_checked": len(relevant)}
 
     except Exception as exc:
