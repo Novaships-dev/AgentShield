@@ -39,14 +39,14 @@ export default function Comparison() {
         </div>
 
         <div
-          className="reveal rounded-2xl overflow-hidden"
+          className="reveal rounded-2xl overflow-hidden overflow-x-auto"
           style={{
             background: 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))',
             border: '1px solid rgba(255,255,255,0.06)',
             backdropFilter: 'blur(24px)',
           }}
         >
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[500px]">
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 <th className="text-left px-6 py-4 text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)', width: '35%' }}>
