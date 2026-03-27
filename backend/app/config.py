@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
 
+    # Brevo (optional — email notifications)
+    brevo_api_key: str = ""
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: str | list) -> list[str]:
