@@ -5,6 +5,7 @@ import { clsx } from 'clsx'
 interface GlowButtonProps {
   children: React.ReactNode
   variant?: 'primary' | 'secondary'
+  size?: 'sm' | 'md' | 'lg'
   onClick?: () => void
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
@@ -14,6 +15,7 @@ interface GlowButtonProps {
 export default function GlowButton({
   children,
   variant = 'primary',
+  size = 'md',
   onClick,
   disabled = false,
   type = 'button',
@@ -25,7 +27,10 @@ export default function GlowButton({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'px-6 py-2.5 rounded-lg font-medium text-sm transition-all duration-200',
+        'rounded-xl font-medium transition-all duration-200',
+        size === 'sm' && 'px-4 py-2 text-sm',
+        size === 'md' && 'px-6 py-2.5 text-sm',
+        size === 'lg' && 'px-8 py-3.5 text-base',
         'focus:outline-none focus:ring-2 focus:ring-offset-2',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         variant === 'primary' && [
