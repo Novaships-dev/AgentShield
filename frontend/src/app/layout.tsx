@@ -15,13 +15,61 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'AgentShield — The complete observability suite for AI agents',
+  metadataBase: new URL('https://agentshield.one'),
+  title: {
+    default: 'AgentShield — The complete observability suite for AI agents',
+    template: '%s | AgentShield',
+  },
   description:
-    'Monitor costs, set budgets, detect anomalies, and protect your AI agents in real time.',
+    'Monitor costs, replay every session, protect with guardrails. One SDK. One line of code. Full visibility for your AI agents.',
+  keywords: [
+    'AI agent monitoring',
+    'LLM cost tracking',
+    'agent observability',
+    'guardrails',
+    'session replay',
+    'OpenAI cost tracking',
+    'LangChain monitoring',
+  ],
+  authors: [{ name: 'Nova', url: 'https://github.com/NovaShips' }],
+  creator: 'Nova',
   openGraph: {
-    title: 'AgentShield',
-    description: 'The complete observability suite for AI agents',
+    title: 'AgentShield — The complete observability suite for AI agents',
+    description:
+      'Monitor costs, replay every session, protect with guardrails. One SDK. One line of code.',
     type: 'website',
+    url: 'https://agentshield.one',
+    siteName: 'AgentShield',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'AgentShield — AI Agent Observability',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AgentShield — The complete observability suite for AI agents',
+    description: 'Monitor costs, replay every session, protect with guardrails.',
+    images: ['/og-image.png'],
+    creator: '@NovaShips',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
 }
 
