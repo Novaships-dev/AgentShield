@@ -16,6 +16,7 @@ celery_app = Celery(
         "app.workers.tasks_guardrails",
         "app.workers.tasks_smart_alerts",
         "app.workers.tasks_recommendations",
+        "app.workers.tasks_webhooks",
     ],
 )
 
