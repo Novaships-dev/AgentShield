@@ -51,6 +51,23 @@ class TrackingService:
         # 4. Auto-create agent if needed
         agent_id = await self._get_or_create_agent(org, request.agent)
 
+        # 4b. Budget check — SYNC, before inserting event
+        budget_status = "ok"
+        budget_remaining_usd = None
+        from app.middleware.budget_check import run_budget_check, increment_budget_counter, publish_budget_ws
+        try:
+            budget_result = await run_budget_check(org.id, agent_id, self._db, self._redis)
+            budget_status = budget_result.get("status", "ok")
+            budget_remaining_usd = budget_result.get("remaining_usd")
+        except Exception as budget_exc:
+            # Re-raise AgentFrozenError and BudgetExceededError — they map to 429
+            from app.utils.errors import AgentFrozenError, BudgetExceededError
+            if isinstance(budget_exc, (AgentFrozenError, BudgetExceededError)):
+                raise
+            # Other errors are non-fatal — log and continue
+            import logging
+            logging.getLogger(__name__).warning(f"[budget] check failed: {budget_exc}")
+
         # 5. Compute totals
         total_tokens = (request.input_tokens or 0) + (request.output_tokens or 0)
 
@@ -111,6 +128,18 @@ class TrackingService:
                 status=request.status,
             )
 
+        # 8b. Increment budget counter after event is stored
+        try:
+            await increment_budget_counter(org.id, agent_id, cost_usd or 0.0, self._db, self._redis)
+            # Publish WebSocket budget events if needed
+            if budget_status in ("warning", "exceeded"):
+                await publish_budget_ws(self._redis, org.id, request.agent, {
+                    "status": budget_status,
+                    "remaining_usd": budget_remaining_usd,
+                })
+        except Exception:
+            pass
+
         # 9. Dispatch async Celery tasks (fire-and-forget)
         try:
             from app.workers.tasks_alerts import check_alert_thresholds
@@ -140,8 +169,8 @@ class TrackingService:
             event_id=uuid.UUID(event_id),
             agent=request.agent,
             cost_usd=cost_usd,
-            budget_remaining_usd=None,  # Sprint 4
-            budget_status="ok",
+            budget_remaining_usd=budget_remaining_usd,
+            budget_status=budget_status,
             guardrail_violations=[],  # Sprint 5
             pii_detected=pii_detected,
             warnings=warnings,
