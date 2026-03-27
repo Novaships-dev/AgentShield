@@ -133,7 +133,7 @@ async def verify_api_key(key: str) -> Organization:
 
 ```
 Flow :
-1. Client ouvre la connexion WS : ws://api.agentshield.io/ws/dashboard
+1. Client ouvre la connexion WS : ws://api.agentshield.one/ws/dashboard
 2. Premier message : {"type": "auth", "token": "<jwt>"}
 3. Le backend vérifie le JWT (même logique que 2.1)
 4. Si OK → subscribe au channel Redis ws:{org_id}
@@ -151,7 +151,7 @@ Flow :
 Flow :
 1. User génère un lien de partage pour une session
 2. Le backend génère un token : UUID + 8 chars aléatoires
-3. URL publique : https://app.agentshield.io/share/{token}
+3. URL publique : https://app.agentshield.one/share/{token}
 4. La page share/ vérifie le token en DB
 5. Si valide et non expiré → afficher la session en read-only
 6. PII TOUJOURS redacté dans la vue partagée (même si store_original=true)
@@ -434,8 +434,8 @@ app.add_middleware(
 
 **Par environnement :**
 - Dev : `http://localhost:3000`
-- Staging : `https://staging-app.agentshield.io`
-- Prod : `https://app.agentshield.io`
+- Staging : `https://staging-app.agentshield.one`
+- Prod : `https://app.agentshield.one`
 
 **Jamais** `*` en production.
 

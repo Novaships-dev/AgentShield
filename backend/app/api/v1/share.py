@@ -12,7 +12,7 @@ from app.schemas.share import ShareSessionRequest, ShareSessionResponse
 
 router = APIRouter(prefix="/v1", tags=["sessions", "share"])
 
-APP_BASE_URL = "https://app.agentshield.io"
+APP_BASE_URL = "https://app.agentshield.one"
 MAX_SHARE_LINKS = 50
 
 _EXPIRY_MAP = {

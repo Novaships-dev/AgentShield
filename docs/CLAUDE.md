@@ -35,7 +35,7 @@ Ne jamais laisser de modifications en local sans push. Chaque tâche = un commit
 
 Stack : FastAPI (Python 3.12) + Next.js 14 + Supabase + Redis/Celery + Stripe + Railway/Vercel
 
-Tool #1 de Nova (@NovaShips). Domaine : agentshield.io
+Tool #1 de Nova (@NovaShips). Domaine : agentshield.one
 
 ---
 
@@ -109,7 +109,7 @@ agentshield/
 - API keys hashées SHA-256 en DB, jamais en clair
 - PII redaction par défaut (privacy by default)
 - Inputs/outputs stockés uniquement si le plan le permet ET PII redacté
-- CORS restrictif (uniquement app.agentshield.io en prod)
+- CORS restrictif (uniquement app.agentshield.one en prod)
 - Rate limiting par plan sur chaque endpoint
 
 ---

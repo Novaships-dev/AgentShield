@@ -12,10 +12,10 @@
 ┌──────────────────────────────────────────────────────────────┐
 │                      CLOUDFLARE (DNS)                         │
 │                                                              │
-│  agentshield.io          → Vercel (landing)                  │
-│  app.agentshield.io      → Vercel (frontend app)             │
-│  api.agentshield.io      → Railway (backend FastAPI)         │
-│  docs.agentshield.io     → Vercel (documentation)            │
+│  agentshield.one          → Vercel (landing)                  │
+│  app.agentshield.one      → Vercel (frontend app)             │
+│  api.agentshield.one      → Railway (backend FastAPI)         │
+│  docs.agentshield.one     → Vercel (documentation)            │
 └──────────────────────────────────────────────────────────────┘
 
 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
@@ -231,7 +231,7 @@ Dockerfile Path: backend/Dockerfile
 Port: 8000
 Health Check Path: /health
 Restart Policy: Always
-Custom Domain: api.agentshield.io
+Custom Domain: api.agentshield.one
 ```
 
 **agentshield-worker :**
@@ -321,9 +321,9 @@ Node.js Version: 20.x
 ### Domains Vercel
 
 ```
-app.agentshield.io         → Frontend app (dashboard)
-agentshield.io             → Landing page (même deploy, route /)
-staging-app.agentshield.io → Preview branch
+app.agentshield.one         → Frontend app (dashboard)
+agentshield.one             → Landing page (même deploy, route /)
+staging-app.agentshield.one → Preview branch
 ```
 
 ### next.config.js
@@ -377,13 +377,13 @@ module.exports = nextConfig;
 Configurées dans Vercel > Project > Settings > Environment Variables. Séparées par environnement (Production, Preview, Development).
 
 ```
-NEXT_PUBLIC_APP_URL=https://app.agentshield.io
-NEXT_PUBLIC_API_URL=https://api.agentshield.io
-NEXT_PUBLIC_WS_URL=wss://api.agentshield.io/ws/dashboard
+NEXT_PUBLIC_APP_URL=https://app.agentshield.one
+NEXT_PUBLIC_API_URL=https://api.agentshield.one
+NEXT_PUBLIC_WS_URL=wss://api.agentshield.one/ws/dashboard
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
-NEXT_PUBLIC_PLAUSIBLE_DOMAIN=agentshield.io
+NEXT_PUBLIC_PLAUSIBLE_DOMAIN=agentshield.one
 ```
 
 ---
@@ -651,7 +651,7 @@ jobs:
 
 | Record | Type | Name | Content | Proxy |
 |--------|------|------|---------|-------|
-| A | agentshield.io | Vercel IP | ☁️ Proxied |
+| A | agentshield.one | Vercel IP | ☁️ Proxied |
 | CNAME | app | cname.vercel-dns.com | ☁️ Proxied |
 | CNAME | api | railway-app-xxx.up.railway.app | ☁️ Proxied |
 | CNAME | docs | cname.vercel-dns.com | ☁️ Proxied |
@@ -723,10 +723,10 @@ Redis :
 
 ```bash
 # 1. Health check backend
-curl https://api.agentshield.io/health
+curl https://api.agentshield.one/health
 
 # 2. Vérifier que le frontend charge
-curl -I https://app.agentshield.io
+curl -I https://app.agentshield.one
 
 # 3. Vérifier que les WebSocket fonctionnent
 # → Ouvrir le dashboard, vérifier la connexion WS dans DevTools

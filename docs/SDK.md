@@ -55,7 +55,7 @@ import agentshield
 # Méthode 2 : configuration explicite
 agentshield.configure(
     api_key="ags_live_xxxxx",           # Requis si pas de var env
-    api_url="https://api.agentshield.io",  # Défaut, changeable pour self-host
+    api_url="https://api.agentshield.one",  # Défaut, changeable pour self-host
     timeout=10,                          # Timeout HTTP en secondes (défaut 10)
     retry_max=3,                         # Retries max (défaut 3)
     retry_backoff=1.0,                   # Backoff initial en secondes (défaut 1.0)
@@ -610,8 +610,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://agentshield.io"
-Documentation = "https://docs.agentshield.io"
+Homepage = "https://agentshield.one"
+Documentation = "https://docs.agentshield.one"
 Repository = "https://github.com/NovaShips/agentshield"
 Changelog = "https://github.com/NovaShips/agentshield/blob/main/CHANGELOG.md"
 
@@ -665,7 +665,7 @@ def call_openai(prompt):
 ​```
 
 That's it. Your costs, sessions, and violations are now tracked
-at [app.agentshield.io](https://app.agentshield.io).
+at [app.agentshield.one](https://app.agentshield.one).
 
 ## Features
 
@@ -687,7 +687,7 @@ callbacks = [LangChainCallback(agent="my-agent")]
 
 ## Docs
 
-[docs.agentshield.io](https://docs.agentshield.io)
+[docs.agentshield.one](https://docs.agentshield.one)
 
 ## License
 
@@ -796,7 +796,7 @@ import pytest
 @pytest.fixture
 def mock_api():
     """Mock the AgentShield API."""
-    with respx.mock(base_url="https://api.agentshield.io") as mock:
+    with respx.mock(base_url="https://api.agentshield.one") as mock:
         mock.post("/v1/track").respond(201, json={
             "event_id": "test-uuid",
             "agent": "test-agent",

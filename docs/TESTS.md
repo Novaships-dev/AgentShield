@@ -326,7 +326,7 @@ import pytest
 @pytest.fixture
 def mock_api():
     """Mock AgentShield API responses."""
-    with respx.mock(base_url="https://api.agentshield.io") as mock:
+    with respx.mock(base_url="https://api.agentshield.one") as mock:
         mock.post("/v1/track").respond(201, json={
             "event_id": "test-uuid",
             "agent": "test-agent",
@@ -342,7 +342,7 @@ def mock_api():
 @pytest.fixture
 def mock_api_budget_exceeded():
     """Mock API returning budget exceeded."""
-    with respx.mock(base_url="https://api.agentshield.io") as mock:
+    with respx.mock(base_url="https://api.agentshield.one") as mock:
         mock.post("/v1/track").respond(429, json={
             "error": {
                 "code": "budget_exceeded",
@@ -497,27 +497,27 @@ describe("BudgetGauge", () => {
 import { test, expect } from "@playwright/test";
 
 test("landing page loads", async ({ page }) => {
-  await page.goto("https://app.agentshield.io");
+  await page.goto("https://app.agentshield.one");
   await expect(page).toHaveTitle(/AgentShield/);
   await expect(page.locator("text=Start Free")).toBeVisible();
 });
 
 test("login flow works", async ({ page }) => {
-  await page.goto("https://app.agentshield.io/login");
-  await page.fill("[name=email]", "test@agentshield.io");
+  await page.goto("https://app.agentshield.one/login");
+  await page.fill("[name=email]", "test@agentshield.one");
   await page.click("text=Send Magic Link");
   await expect(page.locator("text=Check your email")).toBeVisible();
 });
 
 test("dashboard loads after auth", async ({ page }) => {
   // Utiliser un token de test injecté
-  await page.goto("https://app.agentshield.io/dashboard");
+  await page.goto("https://app.agentshield.one/dashboard");
   await expect(page.locator("text=Today")).toBeVisible();
   await expect(page.locator("text=This Month")).toBeVisible();
 });
 
 test("POST /v1/track returns 201", async ({ request }) => {
-  const response = await request.post("https://api.agentshield.io/v1/track", {
+  const response = await request.post("https://api.agentshield.one/v1/track", {
     headers: { Authorization: `Bearer ${process.env.TEST_API_KEY}` },
     data: {
       agent: "e2e-test-agent",

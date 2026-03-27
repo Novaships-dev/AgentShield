@@ -69,9 +69,9 @@ def _send_invitation_email(email: str, org_name: str, token: str) -> None:
         from app.services.brevo import BrevoService
         from app.config import settings
         svc = BrevoService()
-        app_url = "https://app.agentshield.io"
+        app_url = "https://app.agentshield.one"
         svc._post("/smtp/email", {
-            "sender": {"name": "AgentShield", "email": "alerts@agentshield.io"},
+            "sender": {"name": "AgentShield", "email": "alerts@agentshield.one"},
             "to": [{"email": email}],
             "subject": f"You've been invited to join {org_name} on AgentShield",
             "htmlContent": (

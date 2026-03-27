@@ -279,12 +279,12 @@ def _send_plan_activated_email(org_id: str, plan: str, db) -> None:
             svc = BrevoService()
             plan_names = {"starter": "Starter", "pro": "Pro", "team": "Team"}
             svc._post("/smtp/email", {
-                "sender": {"name": "AgentShield", "email": "alerts@agentshield.io"},
+                "sender": {"name": "AgentShield", "email": "alerts@agentshield.one"},
                 "to": [{"email": owner.data["email"]}],
                 "subject": f"🎉 Welcome to AgentShield {plan_names.get(plan, plan)}!",
                 "htmlContent": (
                     f"<p>Your subscription to AgentShield <strong>{plan_names.get(plan, plan)}</strong> is now active.</p>"
-                    f"<p><a href='https://app.agentshield.io/dashboard'>Open Dashboard →</a></p>"
+                    f"<p><a href='https://app.agentshield.one/dashboard'>Open Dashboard →</a></p>"
                 ),
             })
     except Exception as exc:
@@ -298,13 +298,13 @@ def _send_payment_failed_email(org_id: str, grace_end: datetime, db) -> None:
             from app.services.brevo import BrevoService
             svc = BrevoService()
             svc._post("/smtp/email", {
-                "sender": {"name": "AgentShield", "email": "alerts@agentshield.io"},
+                "sender": {"name": "AgentShield", "email": "alerts@agentshield.one"},
                 "to": [{"email": owner.data["email"]}],
                 "subject": "⚠️ AgentShield — Payment failed",
                 "htmlContent": (
                     f"<p>Your payment has failed. You have a 7-day grace period until "
                     f"<strong>{grace_end.strftime('%B %d, %Y')}</strong> to update your payment method.</p>"
-                    f"<p><a href='https://app.agentshield.io/dashboard/settings'>Update Payment →</a></p>"
+                    f"<p><a href='https://app.agentshield.one/dashboard/settings'>Update Payment →</a></p>"
                 ),
             })
     except Exception as exc:
@@ -318,13 +318,13 @@ def _send_plan_downgraded_email(org_id: str, db) -> None:
             from app.services.brevo import BrevoService
             svc = BrevoService()
             svc._post("/smtp/email", {
-                "sender": {"name": "AgentShield", "email": "alerts@agentshield.io"},
+                "sender": {"name": "AgentShield", "email": "alerts@agentshield.one"},
                 "to": [{"email": owner.data["email"]}],
                 "subject": "AgentShield — Your subscription has been cancelled",
                 "htmlContent": (
                     "<p>Your AgentShield subscription has been cancelled. Your account has been downgraded to the Free plan.</p>"
                     "<p>Your data is preserved. You can resubscribe at any time.</p>"
-                    "<p><a href='https://app.agentshield.io/dashboard/settings'>Resubscribe →</a></p>"
+                    "<p><a href='https://app.agentshield.one/dashboard/settings'>Resubscribe →</a></p>"
                 ),
             })
     except Exception as exc:

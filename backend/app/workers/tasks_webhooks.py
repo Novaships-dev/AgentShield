@@ -105,12 +105,12 @@ def _notify_owner_failure(endpoint_id: str, event_type: str, db) -> None:
         if owner.data:
             from app.services.brevo import BrevoService
             BrevoService()._post("/smtp/email", {
-                "sender": {"name": "AgentShield", "email": "alerts@agentshield.io"},
+                "sender": {"name": "AgentShield", "email": "alerts@agentshield.one"},
                 "to": [{"email": owner.data["email"]}],
                 "subject": "⚠️ AgentShield — Webhook delivery failed",
                 "htmlContent": (
                     f"<p>Webhook delivery to <code>{url}</code> failed after 5 attempts for event <code>{event_type}</code>.</p>"
-                    f"<p><a href='https://app.agentshield.io/dashboard/settings'>View Webhooks →</a></p>"
+                    f"<p><a href='https://app.agentshield.one/dashboard/settings'>View Webhooks →</a></p>"
                 ),
             })
     except Exception as exc:
@@ -128,13 +128,13 @@ def _notify_owner_disabled(endpoint_id: str, db) -> None:
         if owner.data:
             from app.services.brevo import BrevoService
             BrevoService()._post("/smtp/email", {
-                "sender": {"name": "AgentShield", "email": "alerts@agentshield.io"},
+                "sender": {"name": "AgentShield", "email": "alerts@agentshield.one"},
                 "to": [{"email": owner.data["email"]}],
                 "subject": "🔴 AgentShield — Webhook endpoint disabled",
                 "htmlContent": (
                     f"<p>Your webhook endpoint <code>{url}</code> has been automatically disabled after "
                     f"3 consecutive delivery failures.</p>"
-                    f"<p><a href='https://app.agentshield.io/dashboard/settings'>Manage Webhooks →</a></p>"
+                    f"<p><a href='https://app.agentshield.one/dashboard/settings'>Manage Webhooks →</a></p>"
                 ),
             })
     except Exception as exc:

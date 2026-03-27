@@ -8,7 +8,7 @@
 
 ```
 Frontend (useWebSocket hook)
-    ↕ WebSocket (wss://api.agentshield.io/ws/dashboard)
+    ↕ WebSocket (wss://api.agentshield.one/ws/dashboard)
 Backend (FastAPI WebSocket endpoint)
     ↕ Redis Pub/Sub (channel ws:{org_id})
 Celery workers / API endpoints (publishers)

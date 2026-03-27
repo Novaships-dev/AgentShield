@@ -83,12 +83,12 @@ async def health_check():
 
 ```
 UptimeRobot (gratuit) :
-  URL    : https://api.agentshield.io/health
+  URL    : https://api.agentshield.one/health
   Check  : toutes les 5 minutes
   Alert  : email + Slack #ops si down > 2 checks consécutifs
 
 Frontend :
-  URL    : https://app.agentshield.io
+  URL    : https://app.agentshield.one
   Check  : toutes les 5 minutes
   Alert  : email + Slack si status != 200
 ```
@@ -586,7 +586,7 @@ Si downtime > 5 minutes et impact visible :
 □ Sentry configuré (backend + frontend)
 □ Sentry alerts configurées (error rate, slow transactions)
 □ Sentry filter_sensitive_data actif (pas d'API keys dans les events)
-□ UptimeRobot configuré sur /health et sur app.agentshield.io
+□ UptimeRobot configuré sur /health et sur app.agentshield.one
 □ Health check teste Redis, DB, Celery
 □ Logging en JSON structuré
 □ Pas de données sensibles dans les logs

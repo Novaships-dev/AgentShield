@@ -337,7 +337,7 @@ async def cmd_status(org: dict, args: str) -> dict:
         "elements": [{
             "type": "button",
             "text": {"type": "plain_text", "text": "Open Dashboard"},
-            "url": f"https://app.agentshield.io/dashboard",
+            "url": f"https://app.agentshield.one/dashboard",
         }]
     })
 
@@ -382,7 +382,7 @@ async def cmd_status(org: dict, args: str) -> dict:
         "current_value": 23.47,
         "threshold": 20.00,
         "overage_pct": 17.4,
-        "dashboard_url": "https://app.agentshield.io/dashboard/agents/uuid"
+        "dashboard_url": "https://app.agentshield.one/dashboard/agents/uuid"
     }
 }
 ```
@@ -434,7 +434,7 @@ async def cmd_status(org: dict, args: str) -> dict:
         "total_cost_usd": 0.47,
         "duration_ms": 263000,
         "status": "success",
-        "replay_url": "https://app.agentshield.io/dashboard/sessions/ticket-123"
+        "replay_url": "https://app.agentshield.one/dashboard/sessions/ticket-123"
     }
 }
 

@@ -8,7 +8,7 @@ from typing import Any
 @dataclass
 class _Config:
     api_key: str | None = None
-    api_url: str = "https://api.agentshield.io"
+    api_url: str = "https://api.agentshield.one"
     timeout: float = 10.0
     retry_max: int = 3
     retry_backoff: float = 1.0

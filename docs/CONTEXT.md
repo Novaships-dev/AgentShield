@@ -324,7 +324,7 @@ from agentshield.integrations import CrewAICallback
 ```python
 import requests
 
-requests.post("https://api.agentshield.io/v1/track", json={
+requests.post("https://api.agentshield.one/v1/track", json={
     "agent": "my-agent",
     "model": "gpt-4o",
     "input_tokens": 1250,

@@ -206,7 +206,7 @@ likely increased context length.
 *Suggested fix:* Switch step 4 to gpt-4o-mini for simple responses,
 or reduce prompt context to <800 tokens.
 
-🔁 <Replay step 4|https://app.agentshield.io/dashboard/sessions/xxx>
+🔁 <Replay step 4|https://app.agentshield.one/dashboard/sessions/xxx>
 ```
 
 ### Règles métier
@@ -358,7 +358,7 @@ En tant que dev, je veux partager une session de replay avec un collègue via un
 1. Clic sur [Share] dans la vue session
 2. Modal : "Generate a shareable link" + option d'expiration (1h, 24h, 7j, never)
 3. Génération d'un `share_token` unique
-4. URL : `https://app.agentshield.io/share/{share_token}`
+4. URL : `https://app.agentshield.one/share/{share_token}`
 5. La page /share/[token] affiche la timeline en read-only, sans auth
 6. PII toujours redacted dans la vue partagée (même si store_original=true)
 

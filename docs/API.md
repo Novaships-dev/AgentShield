@@ -9,8 +9,8 @@
 ## 1. BASE URL
 
 ```
-Production : https://api.agentshield.io
-Staging    : https://staging-api.agentshield.io
+Production : https://api.agentshield.one
+Staging    : https://staging-api.agentshield.one
 Local      : http://localhost:8000
 ```
 
@@ -637,7 +637,7 @@ Générer un lien de partage pour une session.
 ```json
 {
     "share_token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890-xK4fMn2p",
-    "share_url": "https://app.agentshield.io/share/a1b2c3d4-e5f6-7890-abcd-ef1234567890-xK4fMn2p",
+    "share_url": "https://app.agentshield.one/share/a1b2c3d4-e5f6-7890-abcd-ef1234567890-xK4fMn2p",
     "expires_at": "2026-03-16T14:23:01Z",
     "created_at": "2026-03-15T14:23:01Z"
 }
@@ -880,8 +880,8 @@ Liste des API keys (sans la clé complète).
 ```json
 {
     "plan": "pro",
-    "success_url": "https://app.agentshield.io/dashboard/settings?billing=success",
-    "cancel_url": "https://app.agentshield.io/dashboard/settings?billing=cancel"
+    "success_url": "https://app.agentshield.one/dashboard/settings?billing=success",
+    "cancel_url": "https://app.agentshield.one/dashboard/settings?billing=cancel"
 }
 ```
 

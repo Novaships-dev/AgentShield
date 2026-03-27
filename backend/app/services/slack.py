@@ -8,7 +8,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-DASHBOARD_URL = "https://app.agentshield.io/dashboard"
+DASHBOARD_URL = "https://app.agentshield.one/dashboard"
 
 
 class SlackService:

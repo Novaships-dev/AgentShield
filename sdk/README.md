@@ -1,6 +1,6 @@
 # agentshield
 
-The official Python SDK for [AgentShield](https://agentshield.io) — the complete observability suite for AI agents.
+The official Python SDK for [AgentShield](https://agentshield.one) — the complete observability suite for AI agents.
 
 ## Installation
 
@@ -23,7 +23,7 @@ print(agentshield.__version__)  # 0.1.0
 
 ## Documentation
 
-Full documentation at [docs.agentshield.io](https://docs.agentshield.io).
+Full documentation at [docs.agentshield.one](https://docs.agentshield.one).
 
 ## License
 

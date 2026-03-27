@@ -5,7 +5,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-SENDER_EMAIL = "alerts@agentshield.io"
+SENDER_EMAIL = "alerts@agentshield.one"
 SENDER_NAME = "AgentShield"
 
 
@@ -68,14 +68,14 @@ class BrevoService:
   <strong>Threshold:</strong> ${threshold:.4f}<br>
   <strong>Overage:</strong> ${overage:.4f} (+{pct}%)
 </p>
-<p><a href="https://app.agentshield.io/dashboard/alerts">View in Dashboard →</a></p>
+<p><a href="https://app.agentshield.one/dashboard/alerts">View in Dashboard →</a></p>
 """
         if smart_diagnosis:
             html_body += f"""
 <hr>
 <p><strong>💡 AI Diagnosis:</strong><br>{smart_diagnosis}</p>
 <p><strong>Suggested fix:</strong><br>{suggested_fix or "No suggestion available."}</p>
-<p><a href="https://app.agentshield.io/dashboard/agents">Open Replay for this agent →</a></p>
+<p><a href="https://app.agentshield.one/dashboard/agents">Open Replay for this agent →</a></p>
 """
 
         payload = {
@@ -112,7 +112,7 @@ class BrevoService:
   <li>Unexpected traffic spike</li>
   <li>Prompt change causing longer outputs</li>
 </ul>
-<p><a href="https://app.agentshield.io/dashboard/agents">Investigate in Dashboard →</a></p>
+<p><a href="https://app.agentshield.one/dashboard/agents">Investigate in Dashboard →</a></p>
 """
         payload = {
             "sender": {"name": SENDER_NAME, "email": SENDER_EMAIL},
@@ -147,7 +147,7 @@ class BrevoService:
   <li>Optimize the agent (check Cost Autopilot recommendations)</li>
   <li>Deactivate the kill switch manually</li>
 </ul>
-<p><a href="https://app.agentshield.io/dashboard/budgets">Manage Budget →</a></p>
+<p><a href="https://app.agentshield.one/dashboard/budgets">Manage Budget →</a></p>
 """
         else:
             subject = f"⚠️ AgentShield — Budget warning for '{agent_name}' ({percentage:.0f}%)"
@@ -157,7 +157,7 @@ class BrevoService:
   <strong>Budget:</strong> ${max_usd:.2f}<br>
   <strong>Current:</strong> ${current_usd:.2f}
 </p>
-<p><a href="https://app.agentshield.io/dashboard/budgets">Manage Budget →</a></p>
+<p><a href="https://app.agentshield.one/dashboard/budgets">Manage Budget →</a></p>
 """
         payload = {
             "sender": {"name": SENDER_NAME, "email": SENDER_EMAIL},

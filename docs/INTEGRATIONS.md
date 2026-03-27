@@ -245,7 +245,7 @@ Emails transactionnels : alertes, onboarding, billing, invitations.
 | Setting | Valeur |
 |---------|--------|
 | Plan | Free (300 emails/jour) → Starter quand > 50 clients |
-| Sender | alerts@agentshield.io |
+| Sender | alerts@agentshield.one |
 | Sender name | AgentShield |
 
 ### Templates email
@@ -316,13 +316,13 @@ OAuth Scopes (Bot Token):
   - incoming-webhook     (webhook URL pour les alertes)
 
 Slash Commands:
-  - /shield              → POST https://api.agentshield.io/v1/slack/commands
+  - /shield              → POST https://api.agentshield.one/v1/slack/commands
 
 Event Subscriptions:
-  - URL: https://api.agentshield.io/v1/slack/events
+  - URL: https://api.agentshield.one/v1/slack/events
 
 Interactivity:
-  - Request URL: https://api.agentshield.io/v1/slack/interactions
+  - Request URL: https://api.agentshield.one/v1/slack/interactions
 ```
 
 ### OAuth flow
@@ -406,9 +406,9 @@ Analytics privacy-first pour la landing page et l'app.
 ### Configuration
 
 ```
-Site: agentshield.io
+Site: agentshield.one
 Plan: Free (géré) ou self-hosted
-Script: <script defer data-domain="agentshield.io" src="https://plausible.io/js/script.js"></script>
+Script: <script defer data-domain="agentshield.one" src="https://plausible.io/js/script.js"></script>
 ```
 
 ### Events custom à tracker

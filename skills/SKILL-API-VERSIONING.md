@@ -56,7 +56,7 @@ Pas de garantie de compatibilité.
 X-AGS-API-Version: v1           ← retourné dans chaque réponse
 Deprecation: true                ← si l'endpoint est déprécié
 Sunset: Sat, 01 Nov 2026 00:00:00 GMT  ← date de fin de support
-Link: <https://docs.agentshield.io/migration>; rel="successor-version"
+Link: <https://docs.agentshield.one/migration>; rel="successor-version"
 ```
 
 ## RÈGLES

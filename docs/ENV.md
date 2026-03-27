@@ -41,8 +41,8 @@ APP_LOG_LEVEL=info                     # debug | info | warning | error
 
 # ── CORS ─────────────────────────────────────────────
 CORS_ORIGINS=http://localhost:3000     # Origines autorisées, séparées par virgule
-                                       # Prod : https://app.agentshield.io
-                                       # Staging : https://staging-app.agentshield.io
+                                       # Prod : https://app.agentshield.one
+                                       # Staging : https://staging-app.agentshield.one
 
 # ── API Versioning ───────────────────────────────────
 API_V1_PREFIX=/v1                      # Préfixe de l'API v1
@@ -112,7 +112,7 @@ ANTHROPIC_TIMEOUT=30                   # Timeout en secondes
 ```bash
 # ── Brevo ────────────────────────────────────────────
 BREVO_API_KEY=xkeysib-...             # Clé API Brevo
-BREVO_SENDER_EMAIL=alerts@agentshield.io  # Email expéditeur
+BREVO_SENDER_EMAIL=alerts@agentshield.one  # Email expéditeur
 BREVO_SENDER_NAME=AgentShield          # Nom expéditeur
 ```
 
@@ -156,7 +156,7 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws/dashboard # URL WebSocket
 NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321     # URL Supabase (même que backend)
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...               # Clé anonyme Supabase (publique)
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...     # Clé publique Stripe
-NEXT_PUBLIC_PLAUSIBLE_DOMAIN=agentshield.io        # Domaine Plausible analytics
+NEXT_PUBLIC_PLAUSIBLE_DOMAIN=agentshield.one        # Domaine Plausible analytics
 NEXT_PUBLIC_SENTRY_DSN=https://xxx@sentry.io/xxx   # DSN Sentry (optionnel côté front)
 
 # ── Private (server-side uniquement) ─────────────────
@@ -203,7 +203,7 @@ SENTRY_TRACES_SAMPLE_RATE=1.0          # 100% en dev
 ```bash
 APP_ENV=staging
 APP_DEBUG=false
-CORS_ORIGINS=https://staging-app.agentshield.io
+CORS_ORIGINS=https://staging-app.agentshield.one
 SUPABASE_URL=https://xxxx.supabase.co
 REDIS_URL=redis://default:pass@staging-redis.railway.internal:6379
 REDIS_SSL=true
@@ -219,7 +219,7 @@ SENTRY_TRACES_SAMPLE_RATE=0.5
 APP_ENV=production
 APP_DEBUG=false
 APP_WORKERS=4
-CORS_ORIGINS=https://app.agentshield.io
+CORS_ORIGINS=https://app.agentshield.one
 SUPABASE_URL=https://xxxx.supabase.co
 REDIS_URL=redis://default:pass@prod-redis.railway.internal:6379
 REDIS_SSL=true

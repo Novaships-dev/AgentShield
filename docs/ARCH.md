@@ -19,7 +19,7 @@
            ▼                      ▼                     ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      API GATEWAY (FastAPI)                       │
-│                      api.agentshield.io                          │
+│                      api.agentshield.one                          │
 │                      Port 8000 — Railway                         │
 │                                                                  │
 │  ── MODULE MONITOR ──                                            │
@@ -73,7 +73,7 @@
 
 ┌─────────────────────────────────────────────────────────────────┐
 │                     FRONTEND (Next.js 14)                        │
-│                     app.agentshield.io                            │
+│                     app.agentshield.one                            │
 │                     Vercel — Dark mode exclusivement              │
 │                                                                  │
 │  /                        → Landing page + pricing               │

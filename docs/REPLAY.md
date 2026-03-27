@@ -328,7 +328,7 @@ SessionTimeline.tsx
 1. User clique [Share] sur une session
 2. Modal : choisir expiration (1h, 24h, 7d, never)
 3. Backend génère un share_token (UUID + 8 chars)
-4. URL retournée : https://app.agentshield.io/share/{token}
+4. URL retournée : https://app.agentshield.one/share/{token}
 5. La page /share/[token] charge la timeline en read-only
 ```
 
@@ -362,7 +362,7 @@ async def create_share_link(org_id: str, session_id: str, user_id: str, expires_
 
     return {
         "share_token": token,
-        "share_url": f"https://app.agentshield.io/share/{token}",
+        "share_url": f"https://app.agentshield.one/share/{token}",
         "expires_at": expires_at,
     }
 ```

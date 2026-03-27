@@ -24,9 +24,9 @@
 ```
 1. Créer l'app sur api.slack.com/apps
 2. OAuth scopes : commands, chat:write, incoming-webhook
-3. Slash command : /shield → POST https://api.agentshield.io/v1/slack/commands
-4. Events URL : https://api.agentshield.io/v1/slack/events
-5. Redirect URL : https://app.agentshield.io/api/slack/callback
+3. Slash command : /shield → POST https://api.agentshield.one/v1/slack/commands
+4. Events URL : https://api.agentshield.one/v1/slack/events
+5. Redirect URL : https://app.agentshield.one/api/slack/callback
 ```
 
 ## OAUTH FLOW
