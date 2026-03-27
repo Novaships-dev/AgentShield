@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     # Stripe (optional)
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
+    stripe_price_starter: str = ""
+    stripe_price_pro: str = ""
+    stripe_price_team: str = ""
 
     # Brevo (optional — email notifications)
     brevo_api_key: str = ""

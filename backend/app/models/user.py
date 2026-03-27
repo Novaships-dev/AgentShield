@@ -10,6 +10,8 @@ class Organization(BaseModel):
     max_agents: int = 1
     max_requests: int = 10000  # monthly
     modules_enabled: list[str] = []
+    stripe_customer_id: str | None = None
+    stripe_subscription_id: str | None = None
 
 
 class User(BaseModel):
