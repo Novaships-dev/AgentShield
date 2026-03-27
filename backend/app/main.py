@@ -12,6 +12,27 @@ from app.config import settings
 from app.utils.errors import AgentShieldError
 
 # ---------------------------------------------------------------------------
+# Sentry — initialise before the app is created
+# ---------------------------------------------------------------------------
+
+if settings.sentry_dsn:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.app_env,
+        traces_sample_rate=0.1,
+        profiles_sample_rate=0.05,
+        integrations=[
+            StarletteIntegration(transaction_style="endpoint"),
+            FastApiIntegration(transaction_style="endpoint"),
+        ],
+        send_default_pii=False,
+    )
+
+# ---------------------------------------------------------------------------
 # Application
 # ---------------------------------------------------------------------------
 

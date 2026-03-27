@@ -3,6 +3,26 @@ from celery.schedules import crontab
 
 from app.config import settings
 
+# ---------------------------------------------------------------------------
+# Sentry — initialise before tasks are registered
+# ---------------------------------------------------------------------------
+
+if settings.sentry_dsn:
+    import sentry_sdk
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.app_env,
+        traces_sample_rate=0.05,
+        integrations=[
+            CeleryIntegration(monitor_beat_tasks=True),
+            RedisIntegration(),
+        ],
+        send_default_pii=False,
+    )
+
 celery_app = Celery(
     "agentshield",
     broker=settings.redis_url,
