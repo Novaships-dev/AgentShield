@@ -106,6 +106,76 @@ async def remove_member(
     _audit(user, "member.removed", "user", member_id, {}, db)
 
 
+@router.get("/teams/attribution", summary="Team cost attribution by team label")
+async def get_attribution(
+    period: str | None = None,
+    user: User = Depends(get_current_user),
+    _plan=Depends(_require_team),
+    db=Depends(get_db),
+) -> dict:
+    """Return cost breakdown by team label for the current (or specified) period."""
+    from datetime import datetime, timezone
+    import calendar
+
+    now = datetime.now(timezone.utc)
+    if period:
+        try:
+            start_dt = datetime.strptime(period, "%Y-%m")
+            year, month = start_dt.year, start_dt.month
+        except ValueError:
+            raise HTTPException(status_code=400, detail="period must be YYYY-MM")
+    else:
+        year, month = now.year, now.month
+
+    period_start = f"{year}-{month:02d}-01T00:00:00+00:00"
+    last_day = calendar.monthrange(year, month)[1]
+    period_end = f"{year}-{month:02d}-{last_day:02d}T23:59:59+00:00"
+
+    # Fetch events for the period with agent info joined via agent_id
+    events = (
+        db.table("events")
+        .select("cost_usd, agent_id, user_label, team_label")
+        .eq("organization_id", user.organization_id)
+        .gte("tracked_at", period_start)
+        .lte("tracked_at", period_end)
+        .execute()
+    )
+    rows = events.data or []
+
+    # Aggregate by team_label
+    teams: dict[str, dict] = {}
+    total_cost = 0.0
+
+    for row in rows:
+        label = row.get("team_label") or "unassigned"
+        cost = float(row.get("cost_usd") or 0)
+        total_cost += cost
+        if label not in teams:
+            teams[label] = {"team_label": label, "members": set(), "agents": set(), "cost_usd": 0.0}
+        teams[label]["cost_usd"] += cost
+        if row.get("user_label"):
+            teams[label]["members"].add(row["user_label"])
+        if row.get("agent_id"):
+            teams[label]["agents"].add(row["agent_id"])
+
+    result = []
+    for t in sorted(teams.values(), key=lambda x: x["cost_usd"], reverse=True):
+        pct = round(t["cost_usd"] / total_cost * 100, 1) if total_cost > 0 else 0
+        result.append({
+            "team_label": t["team_label"],
+            "members": len(t["members"]),
+            "agents": len(t["agents"]),
+            "cost_usd": round(t["cost_usd"], 4),
+            "pct": pct,
+        })
+
+    return {
+        "period": f"{year}-{month:02d}",
+        "total_cost_usd": round(total_cost, 4),
+        "teams": result,
+    }
+
+
 def _audit(user: User, action: str, resource_type: str, resource_id: str, details: dict, db) -> None:
     try:
         db.table("audit_log").insert({
