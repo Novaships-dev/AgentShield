@@ -5,6 +5,7 @@ import { User, CreditCard, Key, Users } from 'lucide-react'
 import SettingsProfile from '@/components/dashboard/SettingsProfile'
 import SettingsBilling from '@/components/dashboard/SettingsBilling'
 import SettingsApiKeys from '@/components/dashboard/SettingsApiKeys'
+import SettingsTeam from '@/components/dashboard/SettingsTeam'
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -48,14 +49,7 @@ export default function SettingsPage() {
       {active === 'profile' && <SettingsProfile />}
       {active === 'billing' && <SettingsBilling />}
       {active === 'api-keys' && <SettingsApiKeys />}
-      {active === 'team' && (
-        <div className="rounded-xl p-8 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-          <Users className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Team management will be available here once implemented.
-          </p>
-        </div>
-      )}
+      {active === 'team' && <SettingsTeam />}
     </div>
   )
 }
