@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     track, agents, api_keys, sessions, analytics, ws,
     alerts, budgets, forecasts, share, guardrails, pii, violations, recommendations,
-    billing, teams, audit, webhooks, reports,
+    billing, teams, audit, webhooks, reports, slack,
 )
 
 router = APIRouter()
@@ -26,3 +26,4 @@ router.include_router(teams.router)
 router.include_router(audit.router)
 router.include_router(webhooks.router)
 router.include_router(reports.router)
+router.include_router(slack.router)

@@ -43,6 +43,14 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-4-6"
 
+    # Slack (optional — bot slash commands + OAuth)
+    slack_signing_secret: str = ""
+    slack_client_id: str = ""
+    slack_client_secret: str = ""
+
+    # App public URL (used for OAuth redirects)
+    app_url: str = "https://api.agentshield.one"
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: str | list) -> list[str]:
