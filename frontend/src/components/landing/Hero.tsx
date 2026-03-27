@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import Link from 'next/link'
 import GlowButton from '@/components/ui/GlowButton'
+import { track, EVENTS } from '@/lib/analytics'
 
 export default function Hero() {
   const meshRef = useRef<HTMLDivElement>(null)
@@ -91,7 +92,7 @@ export default function Hero() {
 
         {/* CTAs */}
         <div className="flex items-center justify-center gap-4 flex-wrap">
-          <Link href="/setup">
+          <Link href="/setup" onClick={() => track(EVENTS.HERO_CTA_CLICKED)}>
             <GlowButton size="lg">Start Free →</GlowButton>
           </Link>
           <button
