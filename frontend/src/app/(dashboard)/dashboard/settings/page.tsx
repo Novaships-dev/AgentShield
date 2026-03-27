@@ -1,17 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { User, CreditCard, Key, Users } from 'lucide-react'
+import { User, CreditCard, Key, Users, Webhook } from 'lucide-react'
 import SettingsProfile from '@/components/dashboard/SettingsProfile'
 import SettingsBilling from '@/components/dashboard/SettingsBilling'
 import SettingsApiKeys from '@/components/dashboard/SettingsApiKeys'
 import SettingsTeam from '@/components/dashboard/SettingsTeam'
+import SettingsWebhooks from '@/components/dashboard/SettingsWebhooks'
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'billing', label: 'Billing', icon: CreditCard },
   { id: 'api-keys', label: 'API Keys', icon: Key },
   { id: 'team', label: 'Team', icon: Users },
+  { id: 'webhooks', label: 'Webhooks', icon: Webhook },
 ] as const
 
 type Tab = (typeof TABS)[number]['id']
@@ -50,6 +52,7 @@ export default function SettingsPage() {
       {active === 'billing' && <SettingsBilling />}
       {active === 'api-keys' && <SettingsApiKeys />}
       {active === 'team' && <SettingsTeam />}
+      {active === 'webhooks' && <SettingsWebhooks />}
     </div>
   )
 }
