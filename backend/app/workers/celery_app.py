@@ -96,6 +96,12 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=3, minute=0),
         "options": {"queue": "default"},
     },
+    # Cost Autopilot recommendations — every Monday at 03:00 UTC
+    "generate-recommendations": {
+        "task": "recommendations.generate_all",
+        "schedule": crontab(day_of_week="monday", hour=3, minute=0),
+        "options": {"queue": "recommendations"},
+    },
     # Health check ping — every 10 minutes
     "celery-health-check": {
         "task": "maintenance.health_check",
