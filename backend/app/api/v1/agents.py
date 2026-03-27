@@ -1,6 +1,6 @@
 """Agent CRUD endpoints."""
-from fastapi import APIRouter, Depends, Query
-from app.dependencies import get_current_user, require_role, get_db
+from fastapi import APIRouter, Depends, Query, HTTPException
+from app.dependencies import get_current_user, require_role, get_db, get_redis
 from app.models.user import User
 from app.schemas.agent import AgentResponse, AgentDetailResponse, AgentUpdateRequest
 from datetime import datetime, timezone, timedelta
@@ -175,4 +175,78 @@ async def update_agent(
         "description": agent.get("description"),
         "is_active": agent.get("is_active", True),
         "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@router.post("/agents/{agent_id}/kill-switch", summary="Toggle agent kill switch")
+async def toggle_kill_switch(
+    agent_id: str,
+    body: dict,
+    user: User = Depends(require_role("admin")),
+    db=Depends(get_db),
+    redis=Depends(get_redis),
+) -> dict:
+    """Activate or deactivate the kill switch for an agent. Requires Pro+ plan."""
+    plan_rank = {"free": 1, "starter": 2, "pro": 3, "team": 4}
+    if plan_rank.get(user.organization.plan, 1) < 3:
+        raise HTTPException(status_code=403, detail="Kill switch requires Pro plan or higher.")
+
+    result = db.table("agents").select("*").eq("id", agent_id).eq("organization_id", user.organization_id).maybe_single().execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    agent = result.data
+    enabled = bool(body.get("enabled", True))
+    now = datetime.now(timezone.utc)
+
+    # Update DB
+    db.table("agents").update({"is_frozen": enabled}).eq("id", agent_id).execute()
+
+    # Update Redis frozen flag
+    frozen_key = f"frozen:{user.organization_id}:{agent_id}"
+    try:
+        if enabled:
+            await redis.set(frozen_key, "kill_switch")
+        else:
+            await redis.delete(frozen_key)
+    except Exception:
+        pass
+
+    # Publish WebSocket event
+    import json
+    try:
+        channel = f"ws:{user.organization_id}"
+        payload = json.dumps({
+            "type": "budget_frozen" if enabled else "new_event",
+            "data": {
+                "agent": agent.get("name", agent_id),
+                "is_frozen": enabled,
+                "frozen_by": "kill_switch",
+            },
+        })
+        await redis.publish(channel, payload)
+    except Exception:
+        pass
+
+    # Write audit log
+    try:
+        db.table("audit_logs").insert({
+            "id": str(UUID(int=0)),  # placeholder — real UUID generated server-side
+            "organization_id": user.organization_id,
+            "user_id": user.id,
+            "action": "agent.kill_switch_enabled" if enabled else "agent.kill_switch_disabled",
+            "resource_type": "agent",
+            "resource_id": agent_id,
+            "details": {"agent_name": agent.get("name"), "enabled": enabled},
+            "created_at": now.isoformat(),
+        }).execute()
+    except Exception:
+        pass  # Audit log is non-critical
+
+    return {
+        "agent_id": agent_id,
+        "agent_name": agent.get("name", agent_id),
+        "is_frozen": enabled,
+        "frozen_by": "kill_switch" if enabled else None,
+        "frozen_at": now.isoformat() if enabled else None,
     }

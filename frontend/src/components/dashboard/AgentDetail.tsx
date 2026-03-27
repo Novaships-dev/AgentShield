@@ -1,11 +1,20 @@
 'use client'
 
-import { ArrowLeft, TrendingUp, TrendingDown, Zap, DollarSign, Activity, Clock, Film } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowLeft, TrendingUp, TrendingDown, Zap, DollarSign, Activity, Clock, Film, Snowflake, Power } from 'lucide-react'
 import Link from 'next/link'
 import GlassCard from '@/components/ui/GlassCard'
 import CostOverTime from '@/components/charts/CostOverTime'
 import type { Agent } from '@/types/agent'
 import type { AnalyticsResponse } from '@/types/analytics'
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+
+function getAuthHeader(): Record<string, string> {
+  if (typeof window === 'undefined') return {}
+  const token = localStorage.getItem('access_token')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
 
 function formatCost(usd: number) {
   if (usd >= 1) return `$${usd.toFixed(4)}`
@@ -71,6 +80,76 @@ interface AgentDetailProps {
   analytics: AnalyticsResponse | null
 }
 
+function KillSwitchButton({ agentId, initialFrozen }: { agentId: string; initialFrozen: boolean }) {
+  const [frozen, setFrozen] = useState(initialFrozen)
+  const [loading, setLoading] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  async function toggle() {
+    setLoading(true)
+    setShowConfirm(false)
+    try {
+      const res = await fetch(`${API_BASE}/v1/agents/${agentId}/kill-switch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify({ enabled: !frozen }),
+      })
+      if (res.ok) setFrozen(f => !f)
+    } catch { /* silent */ } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="relative">
+      {showConfirm && (
+        <div
+          className="absolute right-0 top-full mt-2 w-64 rounded-xl p-4 z-50 space-y-3"
+          style={{ background: 'var(--surface)', border: '1px solid rgba(239,68,68,0.3)' }}
+        >
+          <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+            {frozen ? 'Unfreeze this agent?' : 'Freeze this agent?'}
+          </p>
+          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            {frozen
+              ? 'The agent will resume accepting tracking events.'
+              : 'All tracking events for this agent will be rejected with a 429 error.'}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={toggle}
+              disabled={loading}
+              className="flex-1 py-1.5 rounded-lg text-xs font-medium"
+              style={{ background: frozen ? '#22c55e' : '#ef4444', color: '#fff', opacity: loading ? 0.7 : 1 }}
+            >
+              {loading ? '...' : frozen ? 'Unfreeze' : 'Freeze'}
+            </button>
+            <button
+              onClick={() => setShowConfirm(false)}
+              className="flex-1 py-1.5 rounded-lg text-xs"
+              style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      <button
+        onClick={() => setShowConfirm(s => !s)}
+        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+        style={frozen
+          ? { background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }
+          : { background: 'rgba(239,68,68,0.06)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)' }
+        }
+        title={frozen ? 'Agent is frozen — click to unfreeze' : 'Activate kill switch to freeze this agent'}
+      >
+        {frozen ? <Snowflake className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+        {frozen ? 'Frozen' : 'Kill Switch'}
+      </button>
+    </div>
+  )
+}
+
 export default function AgentDetail({ agent, analytics }: AgentDetailProps) {
   const summary = analytics?.summary
   const timeseries = analytics?.timeseries ?? []
@@ -105,19 +184,7 @@ export default function AgentDetail({ agent, analytics }: AgentDetailProps) {
             Last event: {timeAgo(agent.last_event_at)}
           </p>
         </div>
-        {/* Kill switch placeholder — Sprint 5 */}
-        <button
-          disabled
-          className="px-4 py-2 rounded-lg text-sm font-medium opacity-30 cursor-not-allowed"
-          style={{
-            background: 'rgba(239,68,68,0.1)',
-            color: '#ef4444',
-            border: '1px solid rgba(239,68,68,0.2)',
-          }}
-          title="Kill Switch — Available in Sprint 5"
-        >
-          Kill Switch
-        </button>
+        <KillSwitchButton agentId={agent.id} initialFrozen={agent.is_frozen ?? false} />
       </div>
 
       {/* Metrics grid */}
