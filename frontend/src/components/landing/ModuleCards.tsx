@@ -1,10 +1,9 @@
 'use client'
 
-import { BarChart3, RefreshCcw, ShieldCheck } from 'lucide-react'
-import { type ComponentType } from 'react'
+import { BarChart3, RefreshCcw, ShieldCheck, type LucideIcon } from 'lucide-react'
 
 const MODULES: {
-  Icon: ComponentType<{ size: number; strokeWidth: number; color: string }>
+  Icon: LucideIcon
   title: string
   tagline: string
   desc: string

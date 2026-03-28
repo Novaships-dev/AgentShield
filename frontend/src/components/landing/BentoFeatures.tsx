@@ -1,11 +1,10 @@
 'use client'
 
-import { Zap, Brain, TrendingDown, RefreshCcw, ShieldCheck, BarChart3 } from 'lucide-react'
-import { type ComponentType } from 'react'
+import { Zap, Brain, TrendingDown, RefreshCcw, ShieldCheck, BarChart3, type LucideIcon } from 'lucide-react'
 
 /* ─── data ─── */
 interface Feature {
-  Icon: ComponentType<{ size: number; strokeWidth: number; color: string }>
+  Icon: LucideIcon
   tag: string
   tagColor: string
   rgb: string
