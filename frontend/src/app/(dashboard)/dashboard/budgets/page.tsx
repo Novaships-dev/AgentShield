@@ -228,8 +228,6 @@ function BudgetCard({ budget, onDelete }: { budget: Budget; onDelete: (id: strin
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [loading, setLoading] = useState(true)
-  const { lastMessage } = useWebSocket()
-
   const loadBudgets = useCallback(async () => {
     try {
       const data = await apiFetch('/v1/budgets')
@@ -243,12 +241,8 @@ export default function BudgetsPage() {
   }, [loadBudgets])
 
   // WebSocket live updates
-  useEffect(() => {
-    if (!lastMessage) return
-    if (lastMessage.type === 'budget_warning' || lastMessage.type === 'budget_frozen') {
-      loadBudgets()
-    }
-  }, [lastMessage, loadBudgets])
+  useWebSocket('budget_warning', useCallback(() => { loadBudgets() }, [loadBudgets]))
+  useWebSocket('budget_frozen', useCallback(() => { loadBudgets() }, [loadBudgets]))
 
   async function handleDelete(id: string) {
     try {

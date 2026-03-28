@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { TrendingUp, AlertCircle } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, defs, LinearGradient, Stop,
+  ResponsiveContainer, ReferenceLine,
 } from 'recharts'
 
 type AgentForecast = {
@@ -124,18 +124,18 @@ function ForecastChart({ org }: { org: OrgForecast }) {
       <ResponsiveContainer width="100%" height={280}>
         <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
           <defs>
-            <LinearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="5%" stopColor="#7C3AED" stopOpacity={0.3} />
-              <Stop offset="95%" stopColor="#7C3AED" stopOpacity={0} />
-            </LinearGradient>
-            <LinearGradient id="projGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="5%" stopColor="#06b6d4" stopOpacity={0.15} />
-              <Stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
-            </LinearGradient>
-            <LinearGradient id="confGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="5%" stopColor="#06b6d4" stopOpacity={0.08} />
-              <Stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
-            </LinearGradient>
+            <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#7C3AED" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="projGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.15} />
+              <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="confGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.08} />
+              <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+            </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
           <XAxis

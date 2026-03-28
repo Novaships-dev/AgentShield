@@ -1,3 +1,5 @@
+'use client'
+
 import GlassCard from '@/components/ui/GlassCard'
 
 const MODULES = [
