@@ -26,6 +26,7 @@ export default function Navbar() {
       <div className="max-w-[1100px] mx-auto px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 no-underline">
+          <img src="/logo.svg" alt="AgentShield" className="h-8 w-auto" />
           <span
             className="text-lg font-bold tracking-tight"
             style={{

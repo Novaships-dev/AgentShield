@@ -1,10 +1,12 @@
 'use client'
 
+import { BarChart3, RefreshCcw, ShieldCheck } from 'lucide-react'
 import GlassCard from '@/components/ui/GlassCard'
+import { ReactNode } from 'react'
 
-const MODULES = [
+const MODULES: { icon: ReactNode; title: string; tagline: string; desc: string; accent: string; glow: string }[] = [
   {
-    icon: '📊',
+    icon: <BarChart3 size={24} strokeWidth={1.5} color="#7C3AED" />,
     title: 'Monitor',
     tagline: 'Track every dollar, in real-time',
     desc: 'Cost tracking per agent, smart alerts with AI diagnosis, forecast your end-of-month bill, and get automatic model recommendations.',
@@ -12,7 +14,7 @@ const MODULES = [
     glow: 'rgba(124,58,237,0.15)',
   },
   {
-    icon: '🔄',
+    icon: <RefreshCcw size={24} strokeWidth={1.5} color="#06B6D4" />,
     title: 'Replay',
     tagline: 'Debug in seconds, not hours',
     desc: 'Step-by-step visual timeline of every agent session. See inputs, outputs, costs, and errors — then share with your team in one click.',
@@ -20,7 +22,7 @@ const MODULES = [
     glow: 'rgba(6,182,212,0.15)',
   },
   {
-    icon: '🛡️',
+    icon: <ShieldCheck size={24} strokeWidth={1.5} color="#F59E0B" />,
     title: 'Protect',
     tagline: 'Guardrails that actually guard',
     desc: 'Configurable content rules, automatic PII redaction, budget caps with kill switch, and compliance-ready audit logs.',
@@ -59,7 +61,12 @@ export default function ModuleCards() {
               />
 
               <div className="relative">
-                <div className="text-4xl mb-4">{mod.icon}</div>
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}
+                >
+                  {mod.icon}
+                </div>
                 <div className="flex items-baseline gap-3 mb-2">
                   <h3 className="text-xl font-bold" style={{ color: '#fff' }}>{mod.title}</h3>
                   <span className="text-xs font-mono px-2 py-0.5 rounded-full" style={{ background: `${mod.accent}20`, color: mod.accent }}>

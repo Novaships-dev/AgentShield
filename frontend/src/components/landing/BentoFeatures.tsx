@@ -1,6 +1,9 @@
-const FEATURES = [
+import { Zap, Brain, TrendingDown, RefreshCcw, ShieldCheck, BarChart3 } from 'lucide-react'
+import { ReactNode } from 'react'
+
+const FEATURES: { icon: ReactNode; tag: string; tagColor: string; title: string; desc: string; large: boolean }[] = [
   {
-    icon: '⚡',
+    icon: <Zap size={24} strokeWidth={1.5} color="#7C3AED" />,
     tag: 'CORE',
     tagColor: '#7C3AED',
     title: 'Real-time Cost Tracking',
@@ -8,7 +11,7 @@ const FEATURES = [
     large: true,
   },
   {
-    icon: '🧠',
+    icon: <Brain size={24} strokeWidth={1.5} color="#06B6D4" />,
     tag: 'AI',
     tagColor: '#06B6D4',
     title: 'Smart Alerts',
@@ -16,7 +19,7 @@ const FEATURES = [
     large: false,
   },
   {
-    icon: '📉',
+    icon: <TrendingDown size={24} strokeWidth={1.5} color="#10B981" />,
     tag: 'SAVINGS',
     tagColor: '#10B981',
     title: 'Cost Autopilot',
@@ -24,7 +27,7 @@ const FEATURES = [
     large: false,
   },
   {
-    icon: '🔄',
+    icon: <RefreshCcw size={24} strokeWidth={1.5} color="#F59E0B" />,
     tag: 'DEBUG',
     tagColor: '#F59E0B',
     title: 'Session Replay',
@@ -32,7 +35,7 @@ const FEATURES = [
     large: false,
   },
   {
-    icon: '🛡️',
+    icon: <ShieldCheck size={24} strokeWidth={1.5} color="#EF4444" />,
     tag: 'SECURITY',
     tagColor: '#EF4444',
     title: 'Guardrails & PII',
@@ -40,7 +43,7 @@ const FEATURES = [
     large: false,
   },
   {
-    icon: '📊',
+    icon: <BarChart3 size={24} strokeWidth={1.5} color="#8B5CF6" />,
     tag: 'FORECAST',
     tagColor: '#8B5CF6',
     title: 'Cost Forecast',
@@ -82,7 +85,12 @@ export default function BentoFeatures() {
 
               <div className="relative">
                 <div className="flex items-start justify-between mb-4">
-                  <span className="text-3xl">{f.icon}</span>
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                    style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}
+                  >
+                    {f.icon}
+                  </div>
                   <span
                     className="text-[10px] font-bold tracking-widest px-2 py-1 rounded-md"
                     style={{ background: `${f.tagColor}20`, color: f.tagColor }}

@@ -40,6 +40,18 @@ export default function Hero() {
         style={{ transition: 'background 0.1s ease' }}
       />
 
+      {/* Dot grid overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
+          maskImage: 'radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%)',
+          animation: 'dotPulse 4s ease-in-out infinite',
+        }}
+      />
+
       {/* Grid lines overlay */}
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.03]"
@@ -48,6 +60,14 @@ export default function Hero() {
           backgroundSize: '60px 60px',
         }}
       />
+
+      {/* CSS animation keyframes */}
+      <style jsx>{`
+        @keyframes dotPulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
+        }
+      `}</style>
 
       <div className="relative z-10 max-w-[1100px] mx-auto px-8 py-20 reveal">
         {/* Badge */}

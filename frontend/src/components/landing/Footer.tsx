@@ -17,6 +17,7 @@ export default function Footer() {
       <div className="max-w-[1100px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-2">
+          <img src="/logo.svg" alt="AgentShield" className="h-6 w-auto" />
           <span
             className="text-sm font-bold"
             style={{
