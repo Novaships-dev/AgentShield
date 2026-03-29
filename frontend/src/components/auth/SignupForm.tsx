@@ -30,7 +30,7 @@ export default function SignupForm() {
       setState('error')
       setErrorMsg(error.message)
     } else {
-      window.location.href = '/setup'
+      window.location.replace('/setup')
     }
   }
 

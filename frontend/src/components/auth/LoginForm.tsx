@@ -25,7 +25,7 @@ export default function LoginForm() {
       setState('error')
       setErrorMsg(error.message)
     } else {
-      window.location.href = '/dashboard'
+      window.location.replace('/dashboard')
     }
   }
 
