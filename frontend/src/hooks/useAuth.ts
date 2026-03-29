@@ -13,14 +13,17 @@ export function useAuth() {
   const supabase = createClient()
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+    // getUser() is authoritative — validates with Supabase server
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
       setIsLoading(false)
     })
 
-    // Listen for auth state changes
+    // Keep session for access_token usage elsewhere
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session)
