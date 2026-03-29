@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Bell, Settings, Search } from 'lucide-react'
+import { Bell, Settings, Search, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function TopNav() {
@@ -63,6 +63,19 @@ export default function TopNav() {
         >
           <Bell className="w-4 h-4" strokeWidth={1.5} />
         </button>
+
+        {/* Admin (platform admin only) */}
+        {user?.email === 'novaships.dev@outlook.com' && (
+          <Link
+            href="/admin"
+            className="p-2 rounded-lg transition-colors hover:bg-white/[0.04]"
+            style={{ color: '#a78bfa' }}
+            aria-label="Platform Admin"
+            title="Platform Admin"
+          >
+            <ShieldCheck className="w-4 h-4" strokeWidth={1.5} />
+          </Link>
+        )}
 
         {/* Settings */}
         <Link
