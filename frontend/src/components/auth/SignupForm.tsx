@@ -38,7 +38,7 @@ export default function SignupForm() {
     setState('loading')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
     if (error) {
       setState('error')

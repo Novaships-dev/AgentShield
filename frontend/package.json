@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@sentry/nextjs": "^10.46.0",
-    "@supabase/ssr": "^0.3.0",
+    "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.43.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.383.0",

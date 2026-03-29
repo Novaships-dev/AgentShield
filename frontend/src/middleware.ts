@@ -27,6 +27,7 @@ export async function middleware(request: NextRequest) {
 
   // IMPORTANT: do not add any logic between createServerClient and getUser()
   const { data: { user } } = await supabase.auth.getUser()
+  console.log('[middleware]', pathname, 'user:', user?.id ?? 'null', 'url:', process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30))
 
   const { pathname } = request.nextUrl
 
