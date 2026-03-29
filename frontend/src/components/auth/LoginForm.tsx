@@ -1,33 +1,33 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import GlowButton from '@/components/ui/GlowButton'
 
-type State = 'idle' | 'loading' | 'success' | 'error'
+type State = 'idle' | 'loading' | 'error'
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [state, setState] = useState<State>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const supabase = createClient()
+  const router = useRouter()
 
-  async function handleMagicLink(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    if (!email) return
+    if (!email || !password) return
     setState('loading')
     setErrorMsg('')
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
-    })
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       setState('error')
       setErrorMsg(error.message)
     } else {
-      setState('success')
+      router.push('/dashboard')
     }
   }
 
@@ -43,27 +43,8 @@ export default function LoginForm() {
     }
   }
 
-  if (state === 'success') {
-    return (
-      <div className="text-center space-y-3">
-        <div className="text-4xl">✉️</div>
-        <p className="text-[var(--text-primary)] font-semibold text-lg">Check your email</p>
-        <p className="text-[var(--text-secondary)] text-sm">
-          We sent a magic link to <span className="text-[var(--accent2)]">{email}</span>.<br />
-          Click it to sign in — no password needed.
-        </p>
-        <button
-          onClick={() => setState('idle')}
-          className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors mt-4"
-        >
-          Use a different email
-        </button>
-      </div>
-    )
-  }
-
   return (
-    <form onSubmit={handleMagicLink} className="space-y-4">
+    <form onSubmit={handleLogin} className="space-y-4">
       {/* Google OAuth */}
       <button
         type="button"
@@ -118,6 +99,34 @@ export default function LoginForm() {
         />
       </div>
 
+      {/* Password input */}
+      <div>
+        <label htmlFor="password" className="block text-xs text-[var(--text-secondary)] mb-1.5 font-medium">
+          Password
+        </label>
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="Your password"
+          required
+          className="w-full px-3.5 py-2.5 rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none transition-all duration-200"
+          style={{
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid var(--border)',
+          }}
+          onFocus={e => {
+            e.currentTarget.style.borderColor = 'var(--accent)'
+            e.currentTarget.style.boxShadow = '0 0 0 2px rgba(124,58,237,0.15)'
+          }}
+          onBlur={e => {
+            e.currentTarget.style.borderColor = 'var(--border)'
+            e.currentTarget.style.boxShadow = 'none'
+          }}
+        />
+      </div>
+
       {errorMsg && (
         <p className="text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
           {errorMsg}
@@ -126,10 +135,10 @@ export default function LoginForm() {
 
       <GlowButton
         type="submit"
-        disabled={state === 'loading' || !email}
+        disabled={state === 'loading' || !email || !password}
         className="w-full justify-center"
       >
-        {state === 'loading' ? 'Sending...' : 'Send Magic Link'}
+        {state === 'loading' ? 'Signing in...' : 'Sign In'}
       </GlowButton>
     </form>
   )
