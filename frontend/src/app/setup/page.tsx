@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
+async function getAuthHeader(): Promise<Record<string, string>> {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.access_token
+    ? { Authorization: `Bearer ${session.access_token}` }
+    : {}
 }
 
 const STEPS = ['Welcome', 'API Key', 'Install SDK', 'First Event', 'Dashboard']
@@ -54,30 +57,32 @@ function StepApiKey({ onNext }: { onNext: () => void }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // Fetch or create an API key
-    fetch(`${API_BASE}/v1/api-keys`, { headers: getAuthHeader() })
-      .then(r => r.json())
-      .then((keys: Array<{ key_preview: string; id: string }>) => {
+    const fetchKeys = async () => {
+      try {
+        const headers = await getAuthHeader()
+        const r = await fetch(`${API_BASE}/v1/api-keys`, { headers })
+        const keys: Array<{ key_preview: string; id: string }> = await r.json()
         if (keys.length > 0) {
-          // Show first key preview (key was already revealed at creation)
           setApiKey(null) // Only show generated keys, not previews
           setLoading(false)
         } else {
-          // Create a new key
-          return fetch(`${API_BASE}/v1/api-keys`, {
+          const postHeaders = await getAuthHeader()
+          const r2 = await fetch(`${API_BASE}/v1/api-keys`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+            headers: { 'Content-Type': 'application/json', ...postHeaders },
             body: JSON.stringify({ name: 'Default' }),
           })
-            .then(r => r.json())
-            .then((d: { key?: string; detail?: string }) => {
-              if (d.key) setApiKey(d.key)
-              else setError(d.detail ?? 'Failed to create API key')
-              setLoading(false)
-            })
+          const d: { key?: string; detail?: string } = await r2.json()
+          if (d.key) setApiKey(d.key)
+          else setError(d.detail ?? 'Failed to create API key')
+          setLoading(false)
         }
-      })
-      .catch(() => { setError('Failed to load API keys'); setLoading(false) })
+      } catch {
+        setError('Failed to load API keys')
+        setLoading(false)
+      }
+    }
+    fetchKeys()
   }, [])
 
   const copy = () => {
@@ -238,7 +243,8 @@ function StepFirstEvent({ onNext }: { onNext: () => void }) {
 
     const poll = async () => {
       try {
-        const r = await fetch(`${API_BASE}/v1/events?limit=1`, { headers: getAuthHeader() })
+        const headers = await getAuthHeader()
+        const r = await fetch(`${API_BASE}/v1/events?limit=1`, { headers })
         const d = await r.json()
         if (Array.isArray(d) && d.length > 0) {
           setEvent(d[0])

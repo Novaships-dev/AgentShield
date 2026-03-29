@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import GlowButton from '@/components/ui/GlowButton'
 
@@ -13,7 +12,6 @@ export default function SignupForm() {
   const [state, setState] = useState<State>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const supabase = createClient()
-  const router = useRouter()
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
@@ -32,7 +30,6 @@ export default function SignupForm() {
       setState('error')
       setErrorMsg(error.message)
     } else {
-      router.refresh()
       window.location.href = '/setup'
     }
   }
