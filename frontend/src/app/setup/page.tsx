@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
@@ -331,8 +330,6 @@ function StepFirstEvent({ onNext }: { onNext: () => void }) {
 
 // ── Step 5: Done ─────────────────────────────────────────────────────────────
 function StepDone() {
-  const router = useRouter()
-
   return (
     <div className="text-center space-y-8">
       <div className="text-5xl mb-2">🎉</div>
@@ -364,7 +361,7 @@ function StepDone() {
       </div>
 
       <button
-        onClick={() => router.push('/dashboard')}
+        onClick={() => { window.location.href = '/dashboard' }}
         className="px-8 py-3 rounded-xl text-sm font-medium"
         style={{ background: 'linear-gradient(135deg, #7C3AED, #06B6D4)', color: '#fff' }}
       >
@@ -377,7 +374,6 @@ function StepDone() {
 // ── Main wizard ──────────────────────────────────────────────────────────────
 export default function SetupPage() {
   const [step, setStep] = useState(0)
-  const router = useRouter()
 
   const next = () => setStep(s => s + 1)
 
@@ -453,7 +449,7 @@ export default function SetupPage() {
         {step < STEPS.length - 1 && (
           <div className="text-center mt-6">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => { window.location.href = '/dashboard' }}
               className="text-xs"
               style={{ color: 'rgba(255,255,255,0.25)' }}
             >

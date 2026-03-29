@@ -32,7 +32,8 @@ export default function SignupForm() {
       setState('error')
       setErrorMsg(error.message)
     } else {
-      router.push('/setup')
+      router.refresh()
+      window.location.href = '/setup'
     }
   }
 
