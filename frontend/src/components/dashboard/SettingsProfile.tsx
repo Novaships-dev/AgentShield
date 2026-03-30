@@ -2,13 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { User, Building2, Save } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { getAuthHeaders } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 export default function SettingsProfile() {
   const [email, setEmail] = useState('')
@@ -17,12 +14,23 @@ export default function SettingsProfile() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    fetch(`${API_BASE}/v1/analytics/summary`, { headers: getAuthHeader() })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d?.user) setEmail(d.user.email ?? '')
-        if (d?.organization) setOrgName(d.organization.name ?? '')
-      })
+    async function loadProfile() {
+      // Retrieve email directly from Supabase (reliable fallback)
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.email) setEmail(user.email)
+
+      // Load org name from API
+      try {
+        const headers = await getAuthHeaders()
+        const r = await fetch(`${API_BASE}/v1/analytics?range=today`, { headers })
+        if (r.ok) {
+          const d = await r.json()
+          if (d?.organization?.name) setOrgName(d.organization.name)
+        }
+      } catch {}
+    }
+    loadProfile()
   }, [])
 
   const handleSave = async () => {

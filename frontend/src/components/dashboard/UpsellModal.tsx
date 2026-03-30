@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Lock, X, Zap } from 'lucide-react'
 import { PLAN_CONFIGS } from '@/types/subscription'
+import { getAccessToken } from '@/lib/auth-header'
 
 interface UpsellModalProps {
   feature: string
@@ -23,13 +24,14 @@ export default function UpsellModal({ feature, requiredPlan, description, onClos
 
   const handleUpgrade = async () => {
     setLoading(true)
+    const token = await getAccessToken()
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'}/v1/billing/checkout`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           plan: requiredPlan,

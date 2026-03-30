@@ -4,13 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { Plus, Trash2, Zap, Circle } from 'lucide-react'
 import WebhookForm from './WebhookForm'
 import WebhookDeliveries from './WebhookDeliveries'
+import { getAuthHeaders } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 type Endpoint = {
   id: string
@@ -28,24 +24,27 @@ export default function SettingsWebhooks() {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [testResults, setTestResults] = useState<Record<string, { success: boolean; code: number | null }>>({})
 
-  const load = useCallback(() => {
-    fetch(`${API_BASE}/v1/webhooks`, { headers: getAuthHeader() })
+  const load = useCallback(async () => {
+    const headers = await getAuthHeaders()
+    fetch(`${API_BASE}/v1/webhooks`, { headers })
       .then(r => r.ok ? r.json() : [])
       .then(d => setEndpoints(Array.isArray(d) ? d : []))
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(load, [load])
+  useEffect(() => { load() }, [load])
 
   const deleteEndpoint = async (id: string) => {
-    await fetch(`${API_BASE}/v1/webhooks/${id}`, { method: 'DELETE', headers: getAuthHeader() })
+    const headers = await getAuthHeaders()
+    await fetch(`${API_BASE}/v1/webhooks/${id}`, { method: 'DELETE', headers })
     load()
   }
 
   const testEndpoint = async (id: string) => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${API_BASE}/v1/webhooks/${id}/test`, {
       method: 'POST',
-      headers: getAuthHeader(),
+      headers,
     })
     const d = await res.json()
     setTestResults(prev => ({ ...prev, [id]: { success: d.success, code: d.status_code } }))

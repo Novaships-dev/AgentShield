@@ -2,13 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Shield } from 'lucide-react'
+import { getAuthHeaders } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 type Entry = {
   id: string
@@ -50,13 +46,14 @@ export default function AuditLog() {
   const [filterAction, setFilterAction] = useState('')
   const [filterResourceType, setFilterResourceType] = useState('')
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true)
     const params = new URLSearchParams({ page: String(page), per_page: '50' })
     if (filterAction) params.set('action', filterAction)
     if (filterResourceType) params.set('resource_type', filterResourceType)
 
-    fetch(`${API_BASE}/v1/audit?${params}`, { headers: getAuthHeader() })
+    const headers = await getAuthHeaders()
+    fetch(`${API_BASE}/v1/audit?${params}`, { headers })
       .then(r => r.ok ? r.json() : { data: [], total: 0 })
       .then(d => {
         setEntries(d.data ?? [])
@@ -65,7 +62,7 @@ export default function AuditLog() {
       .finally(() => setLoading(false))
   }, [page, filterAction, filterResourceType])
 
-  useEffect(load, [load])
+  useEffect(() => { load() }, [load])
 
   const totalPages = Math.ceil(total / 50)
 

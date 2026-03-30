@@ -23,12 +23,9 @@ const ACTION_STYLES: Record<string, { bg: string; color: string }> = {
   block: { bg: 'rgba(239,68,68,0.12)', color: '#fca5a5' },
 }
 
+import { getAuthHeaders } from '@/lib/auth-header'
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const t = localStorage.getItem('access_token')
-  return t ? { Authorization: `Bearer ${t}` } : {}
-}
 
 export default function ViolationsPage() {
   const [violations, setViolations] = useState<Violation[]>([])
@@ -40,8 +37,9 @@ export default function ViolationsPage() {
   const loadViolations = useCallback(async () => {
     setLoading(true)
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`${API_BASE}/v1/violations?page=${page}&per_page=50`, {
-        headers: { ...getAuthHeader() },
+        headers,
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()

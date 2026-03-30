@@ -8,13 +8,9 @@ import SessionTimeline from '@/components/replay/SessionTimeline'
 import SessionStats from '@/components/replay/SessionStats'
 import type { SessionTimeline as SessionTimelineType } from '@/types/session'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+import { getAuthHeaders } from '@/lib/auth-header'
 
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 export default function SessionDetailPage() {
   const params = useParams()
@@ -27,9 +23,10 @@ export default function SessionDetailPage() {
   useEffect(() => {
     if (!sessionId) return
     setLoading(true)
+    getAuthHeaders().then(headers =>
     fetch(`${API_BASE}/v1/sessions/${encodeURIComponent(sessionId)}`, {
-      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-    })
+      headers: { 'Content-Type': 'application/json', ...headers },
+    }))
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
@@ -97,9 +94,10 @@ function ShareModal({ sessionId, onClose }: { sessionId: string; onClose: () => 
   async function generate() {
     setLoading(true)
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`${API_BASE}/v1/sessions/${encodeURIComponent(sessionId)}/share`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ expires_in: expiry }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)

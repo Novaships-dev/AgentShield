@@ -2,13 +2,9 @@
 
 import { useState } from 'react'
 import { FileText, Loader } from 'lucide-react'
+import { getAuthHeaders } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 interface Props {
   onGenerated: () => void
@@ -39,9 +35,10 @@ export default function ReportGenerator({ onGenerated }: Props) {
     setError('')
     setGenerating(true)
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`${API_BASE}/v1/reports/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ period_start: start, period_end: end }),
       })
       const d = await res.json()

@@ -1,14 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { getAuthHeaders } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 export interface OrgSubscription {
   plan: string
@@ -24,19 +19,24 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`${API_BASE}/v1/analytics/summary`, { headers: getAuthHeader() })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d?.organization) setSubscription(d.organization)
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    async function load() {
+      const headers = await getAuthHeaders()
+      fetch(`${API_BASE}/v1/analytics/summary`, { headers })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (d?.organization) setSubscription(d.organization)
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false))
+    }
+    load()
   }, [])
 
   const startCheckout = async (plan: string) => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${API_BASE}/v1/billing/checkout`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({
         plan,
         success_url: `${window.location.origin}/dashboard/settings?billing=success`,
@@ -49,9 +49,10 @@ export function useSubscription() {
   }
 
   const openPortal = async () => {
+    const headers = await getAuthHeaders()
     const res = await fetch(`${API_BASE}/v1/billing/portal`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+      headers: { 'Content-Type': 'application/json', ...headers },
     })
     if (!res.ok) throw new Error('Failed to create portal session')
     const data = await res.json()

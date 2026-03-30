@@ -11,13 +11,9 @@ interface Recommendation {
   estimated_savings_pct: number
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+import { getAuthHeaders } from '@/lib/auth-header'
 
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 interface RecommendationCardProps {
   agentFilter?: string
@@ -30,16 +26,20 @@ export default function RecommendationCard({ agentFilter, limit = 3 }: Recommend
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    fetch(`${API_BASE}/v1/recommendations`, { headers: { ...getAuthHeader() } })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d?.data) {
-          let items: Recommendation[] = d.data
-          if (agentFilter) items = items.filter(r => r.agent === agentFilter)
-          setRecs(items.slice(0, limit))
-        }
-      })
-      .finally(() => setLoaded(true))
+    async function loadRecs() {
+      const headers = await getAuthHeaders()
+      fetch(`${API_BASE}/v1/recommendations`, { headers })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (d?.data) {
+            let items: Recommendation[] = d.data
+            if (agentFilter) items = items.filter(r => r.agent === agentFilter)
+            setRecs(items.slice(0, limit))
+          }
+        })
+        .finally(() => setLoaded(true))
+    }
+    loadRecs()
   }, [agentFilter, limit])
 
   const visible = recs.filter((_, i) => !dismissed.has(i))

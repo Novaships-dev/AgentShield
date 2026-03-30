@@ -1,15 +1,29 @@
 'use client'
 
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Bell, Settings, Search, ShieldCheck } from 'lucide-react'
+import { Bell, Settings, Search, ShieldCheck, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function TopNav() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const initials = user?.email
     ? user.email.slice(0, 2).toUpperCase()
     : 'AG'
+
+  // Fermer le menu au clic extérieur
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <header
@@ -87,17 +101,52 @@ export default function TopNav() {
           <Settings className="w-4 h-4" strokeWidth={1.5} />
         </Link>
 
-        {/* Avatar */}
-        <button
-          className="flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold ml-1 flex-shrink-0"
-          style={{
-            background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
-            color: 'white',
-          }}
-          title={user?.email ?? 'Account'}
-        >
-          {initials}
-        </button>
+        {/* Avatar + Dropdown */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold ml-1 flex-shrink-0 transition-opacity hover:opacity-80"
+            style={{
+              background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+              color: 'white',
+            }}
+            title={user?.email ?? 'Account'}
+          >
+            {initials}
+          </button>
+
+          {menuOpen && (
+            <div
+              className="absolute right-0 top-full mt-2 w-60 rounded-xl py-2 z-50"
+              style={{
+                background: 'rgba(15,15,20,0.95)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              }}
+            >
+              {/* User email */}
+              <div className="px-4 py-2.5 text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                {user?.email ?? 'Not signed in'}
+              </div>
+              <div className="h-px mx-3" style={{ background: 'var(--border)' }} />
+              {/* Sign Out */}
+              <button
+                onClick={() => {
+                  setMenuOpen(false)
+                  signOut()
+                }}
+                className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 text-sm transition-colors rounded-md mx-0"
+                style={{ color: 'var(--text-secondary)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+              >
+                <LogOut className="w-4 h-4" strokeWidth={1.5} />
+                Sign Out
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )

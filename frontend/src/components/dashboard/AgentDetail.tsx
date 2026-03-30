@@ -9,13 +9,9 @@ import CostOverTime from '@/components/charts/CostOverTime'
 import type { Agent } from '@/types/agent'
 import type { AnalyticsResponse } from '@/types/analytics'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+import { getAuthHeaders } from '@/lib/auth-header'
 
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 function formatCost(usd: number) {
   if (usd >= 1) return `$${usd.toFixed(4)}`
@@ -90,9 +86,10 @@ function KillSwitchButton({ agentId, initialFrozen }: { agentId: string; initial
     setLoading(true)
     setShowConfirm(false)
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`${API_BASE}/v1/agents/${agentId}/kill-switch`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ enabled: !frozen }),
       })
       if (res.ok) setFrozen(f => !f)

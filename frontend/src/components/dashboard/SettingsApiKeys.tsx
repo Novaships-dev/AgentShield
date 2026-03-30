@@ -2,13 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Key, Plus, Trash2, Copy, Check } from 'lucide-react'
+import { getAuthHeaders } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 type ApiKey = {
   id: string
@@ -25,20 +21,22 @@ export default function SettingsApiKeys() {
   const [newSecret, setNewSecret] = useState('')
   const [copied, setCopied] = useState(false)
 
-  const load = () => {
-    fetch(`${API_BASE}/v1/api-keys`, { headers: getAuthHeader() })
+  const load = async () => {
+    const headers = await getAuthHeaders()
+    fetch(`${API_BASE}/v1/api-keys`, { headers })
       .then(r => r.ok ? r.json() : { data: [] })
       .then(d => setKeys(d.data ?? []))
   }
-  useEffect(load, [])
+  useEffect(() => { load() }, [])
 
   const create = async () => {
     if (!newName.trim()) return
     setCreating(true)
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`${API_BASE}/v1/api-keys`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ name: newName.trim() }),
       })
       const d = await res.json()
@@ -51,7 +49,8 @@ export default function SettingsApiKeys() {
   }
 
   const revoke = async (id: string) => {
-    await fetch(`${API_BASE}/v1/api-keys/${id}`, { method: 'DELETE', headers: getAuthHeader() })
+    const headers = await getAuthHeaders()
+    await fetch(`${API_BASE}/v1/api-keys/${id}`, { method: 'DELETE', headers })
     load()
   }
 

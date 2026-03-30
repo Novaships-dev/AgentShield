@@ -25,12 +25,9 @@ interface PIIConfig {
   store_original: boolean
 }
 
+import { getAuthHeaders } from '@/lib/auth-header'
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const t = localStorage.getItem('access_token')
-  return t ? { Authorization: `Bearer ${t}` } : {}
-}
 
 export default function PIIPage() {
   const [config, setConfig] = useState<PIIConfig>({
@@ -46,10 +43,14 @@ export default function PIIPage() {
   const [showNewPattern, setShowNewPattern] = useState(false)
 
   useEffect(() => {
-    fetch(`${API_BASE}/v1/pii`, { headers: { ...getAuthHeader() } })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setConfig(d) })
-      .finally(() => setLoading(false))
+    async function loadConfig() {
+      const headers = await getAuthHeaders()
+      fetch(`${API_BASE}/v1/pii`, { headers })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setConfig(d) })
+        .finally(() => setLoading(false))
+    }
+    loadConfig()
   }, [])
 
   function toggleBuiltin(id: string) {
@@ -75,9 +76,10 @@ export default function PIIPage() {
   async function save() {
     setSaving(true)
     try {
+      const headers = await getAuthHeaders()
       await fetch(`${API_BASE}/v1/pii`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify(config),
       })
       setSaved(true)

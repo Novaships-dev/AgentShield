@@ -30,13 +30,9 @@ type ForecastData = {
   by_agent: AgentForecast[]
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+import { getAuthHeaders } from '@/lib/auth-header'
 
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 function ForecastBanner({ org }: { org: OrgForecast }) {
   if (org.insufficient_data || !org.projected_eom_usd) {
@@ -221,7 +217,8 @@ export default function ForecastPage() {
 
   useEffect(() => {
     setLoading(true)
-    fetch(`${API_BASE}/v1/forecasts`, { headers: { 'Content-Type': 'application/json', ...getAuthHeader() } })
+    getAuthHeaders().then(headers =>
+    fetch(`${API_BASE}/v1/forecasts`, { headers: { 'Content-Type': 'application/json', ...headers } }))
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()

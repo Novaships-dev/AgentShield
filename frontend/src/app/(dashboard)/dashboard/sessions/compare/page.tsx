@@ -7,17 +7,14 @@ import Link from 'next/link'
 import type { SessionTimeline, StepData } from '@/types/session'
 import DivergenceList, { computeDivergences } from '@/components/replay/DivergenceList'
 
+import { getAuthHeaders } from '@/lib/auth-header'
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 async function fetchSession(id: string): Promise<SessionTimeline | null> {
+  const headers = await getAuthHeaders()
   const res = await fetch(`${API_BASE}/v1/sessions/${encodeURIComponent(id)}`, {
-    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    headers: { 'Content-Type': 'application/json', ...headers },
   })
   if (!res.ok) return null
   return res.json()

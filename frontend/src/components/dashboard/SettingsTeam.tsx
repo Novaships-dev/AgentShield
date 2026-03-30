@@ -2,13 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { UserPlus, Trash2, Shield, Crown, User } from 'lucide-react'
+import { getAuthHeaders } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 type Member = {
   id: string
@@ -40,23 +36,25 @@ export default function SettingsTeam() {
   const [inviteSuccess, setInviteSuccess] = useState('')
   const [error, setError] = useState('')
 
-  const loadMembers = useCallback(() => {
-    fetch(`${API_BASE}/v1/teams/members`, { headers: getAuthHeader() })
+  const loadMembers = useCallback(async () => {
+    const headers = await getAuthHeaders()
+    fetch(`${API_BASE}/v1/teams/members`, { headers })
       .then(r => r.ok ? r.json() : [])
       .then(d => setMembers(Array.isArray(d) ? d : []))
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(loadMembers, [loadMembers])
+  useEffect(() => { loadMembers() }, [loadMembers])
 
   const sendInvite = async () => {
     if (!inviteEmail.trim()) return
     setInviting(true)
     setError('')
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`${API_BASE}/v1/teams/invite`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
       })
       const d = await res.json()
@@ -73,14 +71,16 @@ export default function SettingsTeam() {
   }
 
   const removeMember = async (id: string) => {
-    await fetch(`${API_BASE}/v1/teams/members/${id}`, { method: 'DELETE', headers: getAuthHeader() })
+    const headers = await getAuthHeaders()
+    await fetch(`${API_BASE}/v1/teams/members/${id}`, { method: 'DELETE', headers })
     loadMembers()
   }
 
   const changeRole = async (id: string, role: string) => {
+    const headers = await getAuthHeaders()
     await fetch(`${API_BASE}/v1/teams/members/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+      headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({ role }),
     })
     loadMembers()

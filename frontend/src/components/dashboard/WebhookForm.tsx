@@ -2,13 +2,9 @@
 
 import { useState } from 'react'
 import { X, Copy, Check } from 'lucide-react'
+import { getAuthHeaders } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 const ALL_EVENTS = [
   { value: 'alert.fired', label: 'Alert fired' },
@@ -52,9 +48,10 @@ export default function WebhookForm({ onClose, onCreated }: Props) {
     setSaving(true)
     setError('')
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`${API_BASE}/v1/webhooks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ url, events }),
       })
       const d = await res.json()

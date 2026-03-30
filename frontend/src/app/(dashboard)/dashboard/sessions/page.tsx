@@ -6,13 +6,9 @@ import { Film, Search, ChevronLeft, ChevronRight, GitCompare } from 'lucide-reac
 import { useWebSocket } from '@/hooks/useWebSocket'
 import type { SessionSummary } from '@/types/session'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+import { getAuthHeaders } from '@/lib/auth-header'
 
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
 const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
   success: { bg: 'rgba(34,197,94,0.12)', color: '#86efac' },
@@ -62,8 +58,9 @@ export default function SessionsPage() {
       if (minCost) params.set('min_cost', minCost)
       if (maxCost) params.set('max_cost', maxCost)
 
+      const headers = await getAuthHeaders()
       const res = await fetch(`${API_BASE}/v1/sessions?${params}`, {
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        headers: { 'Content-Type': 'application/json', ...headers },
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()

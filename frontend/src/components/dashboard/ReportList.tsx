@@ -3,13 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Download, Loader, CheckCircle, XCircle } from 'lucide-react'
 import { useWebSocket } from '@/hooks/useWebSocket'
+import { getAuthHeaders, getAccessToken } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 type Report = {
   id: string
@@ -31,25 +27,26 @@ export default function ReportList({ refreshKey, monthlyUsage }: Props) {
   const [loading, setLoading] = useState(true)
   const loadRef = useRef<() => void>(() => {})
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true)
-    fetch(`${API_BASE}/v1/reports`, { headers: getAuthHeader() })
+    const headers = await getAuthHeaders()
+    fetch(`${API_BASE}/v1/reports`, { headers })
       .then(r => r.ok ? r.json() : [])
       .then(d => setReports(Array.isArray(d) ? d : []))
       .finally(() => setLoading(false))
   }, [])
 
   loadRef.current = load
-  useEffect(load, [load, refreshKey])
+  useEffect(() => { load() }, [load, refreshKey])
 
   // WebSocket: listen for report_ready
   useWebSocket('report_ready', useCallback(() => {
     loadRef.current()
   }, []))
 
-  const download = (reportId: string) => {
+  const download = async (reportId: string) => {
     const url = `${API_BASE}/v1/reports/${reportId}/download`
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+    const token = await getAccessToken()
     fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
       .then(r => r.blob())
       .then(blob => {

@@ -2,13 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { CheckCircle, XCircle, RefreshCw } from 'lucide-react'
+import { getAuthHeaders } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 type Delivery = {
   id: string
@@ -25,14 +21,15 @@ export default function WebhookDeliveries({ endpointId }: { endpointId: string }
   const [deliveries, setDeliveries] = useState<Delivery[]>([])
   const [loading, setLoading] = useState(true)
 
-  const load = useCallback(() => {
-    fetch(`${API_BASE}/v1/webhooks/${endpointId}/deliveries`, { headers: getAuthHeader() })
+  const load = useCallback(async () => {
+    const headers = await getAuthHeaders()
+    fetch(`${API_BASE}/v1/webhooks/${endpointId}/deliveries`, { headers })
       .then(r => r.ok ? r.json() : [])
       .then(d => setDeliveries(Array.isArray(d) ? d : []))
       .finally(() => setLoading(false))
   }, [endpointId])
 
-  useEffect(load, [load])
+  useEffect(() => { load() }, [load])
 
   const StatusIcon = ({ status }: { status: string }) => {
     if (status === 'delivered') return <CheckCircle className="w-4 h-4" style={{ color: '#4ade80' }} />

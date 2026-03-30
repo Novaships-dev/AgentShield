@@ -17,18 +17,15 @@ type Budget = {
   created_at: string
 }
 
+import { getAuthHeaders } from '@/lib/auth-header'
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
 
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 async function apiFetch(path: string, options: RequestInit = {}) {
+  const authHeaders = await getAuthHeaders()
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...getAuthHeader(), ...(options.headers as Record<string, string> ?? {}) },
+    headers: { 'Content-Type': 'application/json', ...authHeaders, ...(options.headers as Record<string, string> ?? {}) },
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()

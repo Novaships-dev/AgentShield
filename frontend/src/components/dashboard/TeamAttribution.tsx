@@ -3,13 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { Download } from 'lucide-react'
+import { getAuthHeaders } from '@/lib/auth-header'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
-function getAuthHeader(): Record<string, string> {
-  if (typeof window === 'undefined') return {}
-  const token = localStorage.getItem('access_token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
 
 const COLORS = ['#7c3aed', '#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#f87171']
 
@@ -35,15 +31,16 @@ export default function TeamAttribution() {
   })
   const [loading, setLoading] = useState(true)
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true)
-    fetch(`${API_BASE}/v1/teams/attribution?period=${period}`, { headers: getAuthHeader() })
+    const headers = await getAuthHeaders()
+    fetch(`${API_BASE}/v1/teams/attribution?period=${period}`, { headers })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setData(d) })
       .finally(() => setLoading(false))
   }, [period])
 
-  useEffect(load, [load])
+  useEffect(() => { load() }, [load])
 
   const exportCsv = () => {
     if (!data) return
