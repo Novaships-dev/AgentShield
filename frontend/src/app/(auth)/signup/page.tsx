@@ -24,12 +24,7 @@ export default function SignupPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 group">
-            <span
-              className="text-2xl font-bold"
-              style={{ color: 'var(--accent)' }}
-            >
-              ◆
-            </span>
+            <img src="/logo.svg" alt="AgentShield" className="h-10 w-10" />
             <span
               className="text-xl font-semibold tracking-tight"
               style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-inter)' }}

@@ -36,7 +36,7 @@ export default function TopNav() {
     >
       {/* Logo */}
       <Link href="/dashboard" className="flex items-center gap-2 mr-4 flex-shrink-0">
-        <span className="text-lg font-bold" style={{ color: 'var(--accent)' }}>◆</span>
+        <img src="/logo.svg" alt="AgentShield" className="h-7 w-7" />
         <span
           className="text-sm font-semibold tracking-tight hidden sm:block"
           style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-inter)' }}
