@@ -25,7 +25,7 @@ def verify_jwt(token: str) -> dict[str, Any]:
         payload = jwt.decode(
             token,
             settings.supabase_jwt_secret,
-            algorithms=["HS256"],
+            algorithms=["HS256", "ES256"],
             audience="authenticated",
         )
         return payload
