@@ -288,7 +288,7 @@ class TrackingService:
     async def _get_or_create_agent(self, org: Organization, agent_name: str) -> str:
         """Return existing agent ID or create a new one."""
         result = self._db.table("agents").select("id").eq("organization_id", org.id).eq("name", agent_name).maybe_single().execute()
-        if result.data:
+        if result and result.data:
             return result.data["id"]
         # Check plan limit before creating
         await check_plan_limits(org, "create_agent")

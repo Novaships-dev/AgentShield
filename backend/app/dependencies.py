@@ -13,11 +13,17 @@ async def _load_user_from_db(user_id: str, payload: dict[str, Any]) -> User:
     """Load user + org from Supabase and build a User model."""
     from app.utils.supabase import get_supabase_client
     db = get_supabase_client()
-    result = db.table("users").select("*, organizations(*)").eq("id", user_id).maybe_single().execute()
-    if not result.data:
+    user_result = db.table("users").select("id, email, role, organization_id").eq("id", user_id).maybe_single().execute()
+    if not user_result or not user_result.data:
         raise AuthenticationError("User not found", code="auth_invalid_token")
-    user_data = result.data
-    org_data = user_data.get("organizations") or {}
+    user_data = user_result.data
+
+    org_id = user_data.get("organization_id", "")
+    org_data = {}
+    if org_id:
+        org_result = db.table("organizations").select("id, name, plan, max_agents, max_requests, modules_enabled").eq("id", org_id).maybe_single().execute()
+        if org_result and org_result.data:
+            org_data = org_result.data
     return User(
         id=user_data.get("id", user_id),
         email=user_data.get("email", payload.get("email", "")),

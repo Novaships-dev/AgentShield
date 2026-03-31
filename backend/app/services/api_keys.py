@@ -57,21 +57,39 @@ async def verify_api_key(key: str) -> Organization:
         data = json.loads(cached)
         return Organization(**data)
 
-    # Cache miss — query DB
+    # Cache miss — query DB (2 separate queries to avoid join serialization issues)
     db = get_supabase_client()
-    result = (
+
+    # Step 1: Find the API key
+    key_result = (
         db.table("api_keys")
-        .select("*, organizations(*)")
+        .select("id, organization_id, is_active")
         .eq("key_hash", key_hash)
         .eq("is_active", True)
         .maybe_single()
         .execute()
     )
 
-    if not result.data:
+    if not key_result or not key_result.data:
         raise AuthenticationError("Invalid API key", code="auth_invalid_api_key")
 
-    org_data = result.data.get("organizations", {}) or {}
+    org_id = key_result.data.get("organization_id")
+    if not org_id:
+        raise AuthenticationError("Invalid API key", code="auth_invalid_api_key")
+
+    # Step 2: Fetch the organization
+    org_result = (
+        db.table("organizations")
+        .select("id, name, plan, max_agents, max_requests, modules_enabled")
+        .eq("id", org_id)
+        .maybe_single()
+        .execute()
+    )
+
+    if not org_result or not org_result.data:
+        raise AuthenticationError("Organization not found", code="auth_invalid_api_key")
+
+    org_data = org_result.data
     org = Organization(
         id=org_data.get("id", ""),
         name=org_data.get("name", ""),
@@ -85,7 +103,7 @@ async def verify_api_key(key: str) -> Organization:
     await redis.set(cache_key, json.dumps(org.model_dump()), ex=_CACHE_TTL)
 
     # Fire-and-forget: update last_used_at
-    api_key_id = result.data.get("id")
+    api_key_id = key_result.data.get("id")
     if api_key_id:
         asyncio.create_task(_update_last_used(api_key_id))
 
