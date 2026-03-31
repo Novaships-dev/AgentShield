@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -50,17 +49,6 @@ class Settings(BaseSettings):
 
     # App public URL (used for OAuth redirects)
     app_url: str = "https://api.agentshield.one"
-
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_cors_origins(cls, v: str | list) -> list[str]:
-        if isinstance(v, list):
-            return v
-        v = v.strip()
-        if v.startswith("["):
-            import json
-            return json.loads(v)
-        return [origin.strip() for origin in v.split(",")]
 
 
 settings = Settings()
