@@ -35,10 +35,11 @@ async def create_webhook(
             db=db,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.warning(f"[webhooks] create failed: {exc}")
+        raise HTTPException(status_code=400, detail="Failed to create webhook endpoint.")
 
     _audit(user, "webhook.created", "webhook", row["id"], {"url": body.url, "events": body.events}, db)
-    return WebhookEndpointResponse(**_normalize(row))
+    return WebhookEndpointResponse(**_normalize(row, include_secret=True))
 
 
 @router.get("/webhooks", response_model=list[WebhookEndpointResponse])
@@ -73,7 +74,8 @@ async def test_webhook(
     try:
         result = test_endpoint(org_id=user.organization_id, endpoint_id=endpoint_id, db=db)
     except ValueError as exc:
-        raise HTTPException(status_code=404, detail=str(exc))
+        logger.warning(f"[webhooks] delete failed: {exc}")
+        raise HTTPException(status_code=404, detail="Webhook endpoint not found.")
     _audit(user, "webhook.tested", "webhook", endpoint_id, {"success": result["success"]}, db)
     return TestWebhookResponse(**result)
 
@@ -101,17 +103,20 @@ async def list_deliveries(
     return [WebhookDeliveryResponse(**r) for r in (result.data or [])]
 
 
-def _normalize(row: dict) -> dict:
-    """Ensure required fields have defaults."""
-    return {
+def _normalize(row: dict, *, include_secret: bool = False) -> dict:
+    """Ensure required fields have defaults. Never expose secret unless explicitly requested."""
+    result = {
         "id": row.get("id", ""),
         "url": row.get("url", ""),
         "events": row.get("events") or [],
         "is_active": row.get("is_active", True),
-        "secret": row.get("secret"),
+        "has_secret": bool(row.get("secret")),
         "consecutive_failures": row.get("consecutive_failures", 0),
         "created_at": row.get("created_at", ""),
     }
+    if include_secret:
+        result["secret"] = row.get("secret")
+    return result
 
 
 def _audit(user: User, action: str, resource_type: str, resource_id: str, details: dict, db) -> None:

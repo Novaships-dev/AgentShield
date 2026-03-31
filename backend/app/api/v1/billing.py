@@ -35,7 +35,8 @@ async def create_checkout(
             cancel_url=body.cancel_url,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.warning(f"[billing] checkout validation error: {exc}")
+        raise HTTPException(status_code=400, detail="Invalid checkout request.")
     except Exception as exc:
         logger.error(f"[billing] checkout error: {exc}", exc_info=True)
         raise HTTPException(status_code=502, detail="Failed to create checkout session.")
@@ -90,7 +91,8 @@ async def stripe_webhook(
     try:
         handle_webhook_event(payload=payload, sig_header=sig_header, redis_client=redis, db_client=db)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.warning(f"[billing] portal error: {exc}")
+        raise HTTPException(status_code=400, detail="Unable to create billing portal session.")
     except Exception as exc:
         logger.error(f"[billing] webhook processing error: {exc}", exc_info=True)
         # Return 200 to prevent Stripe from retrying a processing error

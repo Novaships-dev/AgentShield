@@ -41,7 +41,8 @@ class WebhookEndpointResponse(BaseModel):
     url: str
     events: list[str]
     is_active: bool
-    secret: Optional[str] = None  # Only returned on creation
+    has_secret: bool = False
+    secret: Optional[str] = None
     consecutive_failures: int = 0
     created_at: str
 

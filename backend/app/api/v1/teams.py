@@ -38,7 +38,8 @@ async def invite_member(
             db=db,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.warning(f"[teams] operation failed: {exc}")
+        raise HTTPException(status_code=400, detail="Operation failed. Please check your input and try again.")
 
     # Audit log
     _audit(user, "member.invited", "invitation", body.email, {"email": body.email, "role": body.role}, db)
@@ -75,7 +76,8 @@ async def update_member(
             db=db,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.warning(f"[teams] operation failed: {exc}")
+        raise HTTPException(status_code=400, detail="Operation failed. Please check your input and try again.")
 
     if body.role:
         _audit(user, "member.role_changed", "user", member_id, {"role": body.role}, db)
@@ -101,7 +103,8 @@ async def remove_member(
             db=db,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        logger.warning(f"[teams] operation failed: {exc}")
+        raise HTTPException(status_code=400, detail="Operation failed. Please check your input and try again.")
 
     _audit(user, "member.removed", "user", member_id, {}, db)
 
