@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { AuthProvider } from '@/components/providers/AuthProvider'
 import { LayoutDashboard, Building2, Users, Activity, DollarSign, ArrowLeft } from 'lucide-react'
 
 const ADMIN_EMAIL = 'novaships.dev@outlook.com'
@@ -51,6 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
+    <AuthProvider>
     <div className="min-h-screen" style={{ background: '#030014' }}>
       <div
         className="fixed inset-0 pointer-events-none"
@@ -119,5 +121,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </main>
     </div>
+    </AuthProvider>
   )
 }

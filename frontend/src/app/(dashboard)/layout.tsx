@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import TopNav from '@/components/dashboard/TopNav'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { WebSocketProvider } from '@/components/providers/WebSocketProvider'
+import { AuthProvider, useAuthContext } from '@/components/providers/AuthProvider'
 import { createClient } from '@/lib/supabase/client'
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardContent({ children }: { children: React.ReactNode }) {
+  const { isLoading } = useAuthContext()
   const [plan, setPlan] = useState('free')
 
   useEffect(() => {
@@ -36,6 +38,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     loadPlan()
   }, [])
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--dark)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
+          <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading...</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <WebSocketProvider>
       <div className="min-h-screen" style={{ background: 'var(--dark)' }}>
@@ -54,5 +67,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
     </WebSocketProvider>
+  )
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <DashboardContent>{children}</DashboardContent>
+    </AuthProvider>
   )
 }

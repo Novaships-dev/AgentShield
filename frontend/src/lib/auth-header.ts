@@ -1,5 +1,9 @@
 import { createClient } from '@/lib/supabase/client'
 
+let cachedToken: string | null = null
+let cacheTimestamp = 0
+const CACHE_TTL = 30_000
+
 export async function getAuthHeaders(): Promise<Record<string, string>> {
   const token = await getAccessToken()
   if (!token) return {}
@@ -7,21 +11,43 @@ export async function getAuthHeaders(): Promise<Record<string, string>> {
 }
 
 export async function getAccessToken(): Promise<string | null> {
+  const now = Date.now()
+  if (cachedToken && (now - cacheTimestamp) < CACHE_TTL) {
+    return cachedToken
+  }
+
   const supabase = createClient()
-
-  // Première tentative
   const { data: { session } } = await supabase.auth.getSession()
-  if (session?.access_token) return session.access_token
 
-  // Si la session n'est pas encore prête, attendre un peu et réessayer
-  // Cela arrive quand le composant se monte avant que Supabase ait fini
-  // de restaurer la session depuis les cookies
-  await new Promise(resolve => setTimeout(resolve, 500))
-  const { data: { session: retrySession } } = await supabase.auth.getSession()
-  if (retrySession?.access_token) return retrySession.access_token
+  if (session?.access_token) {
+    cachedToken = session.access_token
+    cacheTimestamp = now
+    return session.access_token
+  }
 
-  // Dernière tentative après un délai plus long
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  const { data: { session: finalSession } } = await supabase.auth.getSession()
-  return finalSession?.access_token ?? null
+  return new Promise<string | null>((resolve) => {
+    const timeout = setTimeout(() => {
+      sub.unsubscribe()
+      resolve(null)
+    }, 3000)
+
+    const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        clearTimeout(timeout)
+        sub.unsubscribe()
+        if (session?.access_token) {
+          cachedToken = session.access_token
+          cacheTimestamp = Date.now()
+          resolve(session.access_token)
+        } else {
+          resolve(null)
+        }
+      }
+    )
+  })
+}
+
+export function setTokenCache(token: string | null) {
+  cachedToken = token
+  cacheTimestamp = token ? Date.now() : 0
 }
