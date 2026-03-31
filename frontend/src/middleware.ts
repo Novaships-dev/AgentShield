@@ -30,13 +30,18 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Protect /dashboard/* and /setup routes
+  // Check if Supabase auth cookies exist (sb-* cookies)
+  const hasAuthCookies = request.cookies.getAll().some(c => c.name.startsWith('sb-'))
+
+  // Protect /dashboard/* /setup and /admin routes
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/setup') || pathname.startsWith('/admin')) {
-    if (!user) {
+    if (!user && !hasAuthCookies) {
+      // No user AND no cookies → truly not authenticated
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       return NextResponse.redirect(url)
     }
+    // If user is null but cookies exist, let through — the client will handle auth
   }
 
   // Redirect logged-in users away from auth pages
