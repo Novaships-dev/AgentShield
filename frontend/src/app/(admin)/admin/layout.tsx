@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { label: 'Revenue', href: '/admin/revenue', icon: DollarSign },
 ]
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminContent({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
   const pathname = usePathname()
   const [authorized, setAuthorized] = useState(false)
@@ -52,7 +52,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <AuthProvider>
     <div className="min-h-screen" style={{ background: '#030014' }}>
       <div
         className="fixed inset-0 pointer-events-none"
@@ -121,6 +120,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </main>
     </div>
+  )
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <AdminContent>{children}</AdminContent>
     </AuthProvider>
   )
 }
