@@ -44,18 +44,6 @@ app = FastAPI(
 )
 
 # ---------------------------------------------------------------------------
-# CORS Middleware
-# ---------------------------------------------------------------------------
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# ---------------------------------------------------------------------------
 # Request ID Middleware
 # ---------------------------------------------------------------------------
 
@@ -69,7 +57,21 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# RequestIdMiddleware FIRST (so it runs AFTER CORS in the middleware chain)
 app.add_middleware(RequestIdMiddleware)
+
+# ---------------------------------------------------------------------------
+# CORS Middleware
+# ---------------------------------------------------------------------------
+
+# CORS LAST (so it runs FIRST and handles OPTIONS preflight before anything else)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---------------------------------------------------------------------------
 # Exception Handlers
