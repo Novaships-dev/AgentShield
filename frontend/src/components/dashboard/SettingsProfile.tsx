@@ -15,18 +15,30 @@ export default function SettingsProfile() {
 
   useEffect(() => {
     async function loadProfile() {
-      // Retrieve email directly from Supabase (reliable fallback)
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+
+      // Attendre que la session soit prête (retry)
+      let user = null
+      for (let i = 0; i < 3; i++) {
+        const { data } = await supabase.auth.getUser()
+        if (data?.user) {
+          user = data.user
+          break
+        }
+        await new Promise(r => setTimeout(r, 500))
+      }
+
       if (user?.email) setEmail(user.email)
 
       // Load org name from API
       try {
         const headers = await getAuthHeaders()
-        const r = await fetch(`${API_BASE}/v1/analytics?range=today`, { headers })
-        if (r.ok) {
-          const d = await r.json()
-          if (d?.organization?.name) setOrgName(d.organization.name)
+        if (Object.keys(headers).length > 0) {
+          const r = await fetch(`${API_BASE}/v1/analytics?range=today`, { headers })
+          if (r.ok) {
+            const d = await r.json()
+            if (d?.organization?.name) setOrgName(d.organization.name)
+          }
         }
       } catch {}
     }

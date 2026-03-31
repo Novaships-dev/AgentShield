@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getAccessToken } from '@/lib/auth-header'
 import { apiFetch } from '@/lib/api'
 import type { AnalyticsResponse, LiveEvent } from '@/types/analytics'
 import { useWebSocket } from './useWebSocket'
@@ -22,16 +22,15 @@ export function useAnalytics(options: UseAnalyticsOptions = {}) {
   const [requestsDelta, setRequestsDelta] = useState(0)
 
   const fetchAnalytics = useCallback(async () => {
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) return
+    const token = await getAccessToken()
+    if (!token) return
     try {
       const params = new URLSearchParams({ range })
       if (agentId) params.set('agent_id', agentId)
       if (provider) params.set('provider', provider)
       const result = await apiFetch<AnalyticsResponse>(
         `/v1/analytics?${params}`,
-        { token: session.access_token }
+        { token }
       )
       setData(result)
       // Reset deltas after a fresh fetch

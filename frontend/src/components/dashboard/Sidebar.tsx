@@ -28,7 +28,7 @@ const SECTIONS: { title: string; module?: 'monitor' | 'replay' | 'protect'; item
       { label: 'Budgets', href: '/dashboard/budgets', icon: Wallet, module: 'monitor', planRequired: 'starter' },
       { label: 'Forecast', href: '/dashboard/forecast', icon: TrendingUp, module: 'monitor', planRequired: 'pro' },
       { label: 'Reports', href: '/dashboard/reports', icon: FileText, module: 'monitor', planRequired: 'pro' },
-      { label: 'Team', href: '/dashboard/team', icon: Users, module: 'monitor', planRequired: 'team' },
+      { label: 'Team', href: '/dashboard/team', icon: Users, module: 'monitor', planRequired: 'pro' },
     ],
   },
   {

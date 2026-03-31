@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getAccessToken } from '@/lib/auth-header'
 import { apiFetch } from '@/lib/api'
 import type { Agent, AgentsListResponse } from '@/types/agent'
 
@@ -12,13 +12,16 @@ export function useAgents() {
   const [error, setError] = useState<string | null>(null)
 
   const fetch = useCallback(async () => {
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) return
+    const token = await getAccessToken()
+    if (!token) {
+      setError('Session not ready — please refresh')
+      setIsLoading(false)
+      return
+    }
     try {
       const result = await apiFetch<AgentsListResponse>(
         '/v1/agents?limit=100',
-        { token: session.access_token }
+        { token }
       )
       setAgents(result.data)
       setTotal(result.pagination.total)
@@ -40,13 +43,16 @@ export function useAgent(id: string) {
   const [error, setError] = useState<string | null>(null)
 
   const fetch = useCallback(async () => {
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) return
+    const token = await getAccessToken()
+    if (!token) {
+      setError('Session not ready — please refresh')
+      setIsLoading(false)
+      return
+    }
     try {
       const result = await apiFetch<Agent>(
         `/v1/agents/${id}`,
-        { token: session.access_token }
+        { token }
       )
       setAgent(result)
     } catch (err) {
