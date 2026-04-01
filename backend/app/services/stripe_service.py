@@ -95,7 +95,8 @@ def handle_webhook_event(payload: bytes, sig_header: str, redis_client, db_clien
     except ValueError:
         raise ValueError("Invalid payload")
 
-    event_id = event["id"]
+    event_data = dict(event)
+    event_id = event_data.get("id", "")
 
     # Idempotence — skip if already processed (TTL 48h)
     import asyncio
@@ -117,12 +118,13 @@ def handle_webhook_event(payload: bytes, sig_header: str, redis_client, db_clien
         "customer.subscription.deleted": _handle_subscription_deleted,
     }
 
-    handler = handlers.get(event["type"])
+    event_type = event_data.get("type")
+    handler = handlers.get(event_type)
     if handler:
         handler(event, db_client)
-        logger.info(f"[stripe] handled event {event['type']} ({event_id})")
+        logger.info(f"[stripe] handled event {event_type} ({event_id})")
     else:
-        logger.debug(f"[stripe] unhandled event type: {event['type']}")
+        logger.debug(f"[stripe] unhandled event type: {event_type}")
 
     # Mark as processed
     try:
@@ -150,10 +152,14 @@ def _apply_plan_to_org(org_id: str, plan: str, customer_id: str, subscription_id
     }).eq("id", org_id).execute()
 
 
-def _handle_checkout_completed(event: dict, db) -> None:
+def _handle_checkout_completed(event, db) -> None:
     session = event["data"]["object"]
-    org_id = session.get("metadata", {}).get("organization_id")
-    plan = session.get("metadata", {}).get("plan")
+    metadata = getattr(session, "metadata", {}) or {}
+    if isinstance(metadata, str):
+        import json as _json
+        metadata = _json.loads(metadata)
+    org_id = metadata.get("organization_id") if isinstance(metadata, dict) else getattr(metadata, "organization_id", None)
+    plan = metadata.get("plan") if isinstance(metadata, dict) else getattr(metadata, "plan", None)
     if not org_id or not plan or plan not in PLAN_CONFIGS:
         logger.warning("[stripe] checkout.completed: missing org_id or plan in metadata")
         return
@@ -161,25 +167,25 @@ def _handle_checkout_completed(event: dict, db) -> None:
     _apply_plan_to_org(
         org_id=org_id,
         plan=plan,
-        customer_id=session.get("customer", ""),
-        subscription_id=session.get("subscription", ""),
+        customer_id=getattr(session, "customer", "") or "",
+        subscription_id=getattr(session, "subscription", "") or "",
         db=db,
     )
     _audit(org_id, None, "plan.upgraded", "organization", org_id, {"plan": plan}, db)
     _send_plan_activated_email(org_id, plan, db)
 
 
-def _handle_invoice_paid(event: dict, db) -> None:
+def _handle_invoice_paid(event, db) -> None:
     invoice = event["data"]["object"]
-    customer_id = invoice.get("customer", "")
+    customer_id = getattr(invoice, "customer", "") or ""
     org = _get_org_by_stripe_customer(customer_id, db)
     if org:
         logger.info(f"[stripe] invoice.paid for org {org['id']} — renewal confirmed")
 
 
-def _handle_payment_failed(event: dict, db) -> None:
+def _handle_payment_failed(event, db) -> None:
     invoice = event["data"]["object"]
-    customer_id = invoice.get("customer", "")
+    customer_id = getattr(invoice, "customer", "") or ""
     org = _get_org_by_stripe_customer(customer_id, db)
     if not org:
         return
@@ -192,9 +198,9 @@ def _handle_payment_failed(event: dict, db) -> None:
     _send_payment_failed_email(org["id"], grace_end, db)
 
 
-def _handle_subscription_updated(event: dict, db) -> None:
+def _handle_subscription_updated(event, db) -> None:
     subscription = event["data"]["object"]
-    customer_id = subscription.get("customer", "")
+    customer_id = getattr(subscription, "customer", "") or ""
     org = _get_org_by_stripe_customer(customer_id, db)
     if not org:
         return
@@ -210,7 +216,7 @@ def _handle_subscription_updated(event: dict, db) -> None:
         org_id=org["id"],
         plan=new_plan,
         customer_id=customer_id,
-        subscription_id=subscription.get("id", ""),
+        subscription_id=getattr(subscription, "id", "") or "",
         db=db,
     )
 
@@ -219,9 +225,9 @@ def _handle_subscription_updated(event: dict, db) -> None:
     _audit(org["id"], None, action, "organization", org["id"], {"from": old_plan, "to": new_plan}, db)
 
 
-def _handle_subscription_deleted(event: dict, db) -> None:
+def _handle_subscription_deleted(event, db) -> None:
     subscription = event["data"]["object"]
-    customer_id = subscription.get("customer", "")
+    customer_id = getattr(subscription, "customer", "") or ""
     org = _get_org_by_stripe_customer(customer_id, db)
     if not org:
         return
@@ -240,13 +246,16 @@ def _handle_subscription_deleted(event: dict, db) -> None:
     _send_plan_downgraded_email(org["id"], db)
 
 
-def _infer_plan_from_subscription(subscription: dict) -> str | None:
+def _infer_plan_from_subscription(subscription) -> str | None:
     """Try to infer plan from subscription metadata or price ID."""
     from app.config import settings
-    items = subscription.get("items", {}).get("data", [])
-    if not items:
+    items_obj = getattr(subscription, "items", None) or {}
+    items_data = getattr(items_obj, "data", None) if not isinstance(items_obj, dict) else items_obj.get("data", [])
+    if not items_data:
         return None
-    price_id = items[0].get("price", {}).get("id", "")
+    first_item = items_data[0]
+    price_obj = getattr(first_item, "price", None) if not isinstance(first_item, dict) else first_item.get("price", {})
+    price_id = getattr(price_obj, "id", "") if not isinstance(price_obj, dict) else price_obj.get("id", "")
     price_map = {
         settings.stripe_price_starter: "starter",
         settings.stripe_price_pro: "pro",
