@@ -22,5 +22,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/docs/api`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/docs/frameworks`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE}/setup`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    // Integrations
+    { url: `${BASE}/integrations/langchain`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${BASE}/integrations/openai`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${BASE}/integrations/crewai`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${BASE}/integrations/anthropic`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${BASE}/integrations/llamaindex`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${BASE}/integrations/autogen`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
+    // Tools
+    { url: `${BASE}/tools/cost-calculator`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75 },
   ]
 }

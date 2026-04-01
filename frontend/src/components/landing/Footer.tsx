@@ -3,6 +3,7 @@ import NewsletterForm from './NewsletterForm'
 
 const LINKS = [
   { label: 'Blog', href: '/blog' },
+  { label: 'Cost Calculator', href: '/tools/cost-calculator' },
   { label: 'Privacy', href: '/privacy' },
   { label: 'Terms', href: '/terms' },
   { label: 'Status', href: 'https://status.agentshield.one' },
