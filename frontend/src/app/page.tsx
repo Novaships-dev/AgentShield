@@ -12,6 +12,7 @@ const HowItWorks = dynamic(() => import('@/components/landing/HowItWorks'))
 const CodePreview = dynamic(() => import('@/components/landing/CodePreview'))
 const Pricing = dynamic(() => import('@/components/landing/Pricing'))
 const Comparison = dynamic(() => import('@/components/landing/Comparison'))
+const ProviderLimits = dynamic(() => import('@/components/landing/ProviderLimits'))
 const FAQ = dynamic(() => import('@/components/landing/FAQ'))
 const FinalCTA = dynamic(() => import('@/components/landing/FinalCTA'))
 const Footer = dynamic(() => import('@/components/landing/Footer'))
@@ -30,6 +31,7 @@ export default function LandingPage() {
       <CodePreview />
       <Pricing />
       <Comparison />
+      <ProviderLimits />
       <FAQ />
       <FinalCTA />
       <Footer />

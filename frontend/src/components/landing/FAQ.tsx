@@ -32,6 +32,26 @@ const FAQS = [
     q: 'Can I self-host AgentShield?',
     a: 'Not yet. We are working on a self-hosted version for enterprise compliance needs. Contact us if that is a requirement.',
   },
+  {
+    q: 'Do I need to know Python to use AgentShield?',
+    a: "No. AgentShield has a REST API that works with any tool that can send an HTTP POST request — n8n, Make, Zapier, Retool, any programming language. The Python SDK is optional.",
+  },
+  {
+    q: 'How does AgentShield work with n8n / Make / Zapier?',
+    a: "Add an HTTP Request node after your AI call. POST to api.agentshield.one/v1/track with your agent name and token counts. Costs appear in the dashboard in real time. No SDK, no code changes.",
+  },
+  {
+    q: "What's the difference between AgentShield and LangSmith / Helicone / Langfuse?",
+    a: "AgentShield is the only tool that combines per-agent cost attribution, session replay, guardrails, and budget kill switches in one product. It also works with no-code tools like n8n and Make, which none of the alternatives support.",
+  },
+  {
+    q: "Why can't I just use OpenAI/Anthropic spending limits?",
+    a: "Provider limits cap your total spend. AgentShield caps per agent, per session. Your OpenAI dashboard shows 'you spent $340 this month.' AgentShield shows 'your research-agent spent $280, and session #4847 looped 97 times causing a $40 spike on Tuesday.' That per-agent attribution is what providers don't give you.",
+  },
+  {
+    q: 'Is AgentShield just a wrapper around provider dashboards?',
+    a: "No. Providers show total spend. AgentShield tracks per-agent, per-session costs, replays every step of an agent session, detects anomalies using statistical baselines, enforces budget caps per agent with automatic kill switches, and redacts PII from tracked data. None of that exists in any provider dashboard.",
+  },
 ]
 
 export default function FAQ() {

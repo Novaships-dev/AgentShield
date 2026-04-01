@@ -15,7 +15,7 @@ const MODULES: {
     Icon: BarChart3,
     title: 'Monitor',
     tagline: 'Track every dollar, in real-time',
-    desc: 'Cost tracking per agent, smart alerts with AI diagnosis, forecast your end-of-month bill, and get automatic model recommendations.',
+    desc: 'Cost tracking per agent, smart alerts with AI diagnosis, forecast costs that accumulate without per-agent visibility, and get automatic model recommendations.',
     accent: '#7C3AED',
     rgb: '124,58,237',
     rotateInit: 'perspective(1000px) rotateY(-5deg)',

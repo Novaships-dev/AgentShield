@@ -58,7 +58,7 @@ export default function QuickstartPage() {
         <h1 className="text-3xl font-bold mt-4 mb-2" style={{ color: '#fff' }}>
           Get started in 2 minutes
         </h1>
-        <P>One SDK. One decorator. Full observability for your AI agents.</P>
+        <P>One API call. Full observability for your AI agents.</P>
       </div>
 
       <H2 id="install">1. Install the SDK</H2>

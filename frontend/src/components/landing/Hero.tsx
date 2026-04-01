@@ -306,9 +306,9 @@ export default function Hero() {
           className="text-lg sm:text-xl max-w-2xl mx-auto mt-6 mb-10 leading-relaxed"
           style={{ color: 'rgba(255,255,255,0.6)', textShadow: '0 1px 12px rgba(0,0,0,0.5)' }}
         >
-          Monitor costs. Replay every session. Protect with guardrails.
+          Monitor costs per agent, per session. Replay every step. Protect with guardrails.
           <br className="hidden sm:block" />
-          One SDK. One line of code. Full visibility.
+          Works with Python, n8n, Make, Zapier, and any tool that calls an LLM.
         </p>
 
         {/* CTAs */}

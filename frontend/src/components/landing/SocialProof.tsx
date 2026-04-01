@@ -1,11 +1,20 @@
 export default function SocialProof() {
-  const frameworks = [
+  const sdkFrameworks = [
     { name: 'OpenAI', color: '#10a37f' },
     { name: 'Anthropic', color: '#d97706' },
     { name: 'LangChain', color: '#1c86ee' },
     { name: 'LlamaIndex', color: '#7c3aed' },
     { name: 'CrewAI', color: '#ef4444' },
     { name: 'AutoGen', color: '#06b6d4' },
+  ]
+
+  const noCodeTools = [
+    { name: 'n8n', color: '#EA4B71' },
+    { name: 'Make', color: '#6D00CC' },
+    { name: 'Zapier', color: '#FF4A00' },
+    { name: 'Flowise', color: '#2B6CB0' },
+    { name: 'REST API', color: '#10B981' },
+    { name: 'cURL', color: '#F59E0B' },
   ]
 
   const stats = [
@@ -53,39 +62,26 @@ export default function SocialProof() {
         {/* Integrates with */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>
-            Works with your existing stack
+            Works with everything
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {frameworks.map((f) => (
-            <div
-              key={f.name}
-              style={{
-                padding: '8px 20px',
-                borderRadius: 99,
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.6)',
-                fontSize: 14,
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: f.color,
-                  display: 'inline-block',
-                  boxShadow: `0 0 6px ${f.color}`,
-                }}
-              />
-              {f.name}
-            </div>
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {sdkFrameworks.map((f) => (
+              <div key={f.name} style={{ padding: '6px 16px', borderRadius: 99, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: f.color, display: 'inline-block', boxShadow: `0 0 5px ${f.color}` }} />
+                {f.name}
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {noCodeTools.map((f) => (
+              <div key={f.name} style={{ padding: '6px 16px', borderRadius: 99, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: f.color, display: 'inline-block', boxShadow: `0 0 5px ${f.color}` }} />
+                {f.name}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Testimonial */}

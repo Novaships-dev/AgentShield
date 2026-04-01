@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 
 /* ─── Code lines with token-level highlighting ─── */
 type Token = { text: string; color: string }
@@ -36,9 +36,90 @@ const LINES: Line[] = [
 ]
 
 /* ─── Tabs ─── */
-const TABS = ['Python', 'cURL', 'LangChain'] as const
+const TABS = ['Python', 'n8n', 'cURL', 'JavaScript'] as const
+type Tab = typeof TABS[number]
+
+const TAB_CONTENT: Record<Tab, { label: string; code: string }> = {
+  Python: {
+    label: 'agentshield_example.py',
+    code: `import agentshield as shield
+
+@shield(agent="my-research-agent")
+async def research_agent(query: str) -> str:
+    # AgentShield tracks per-agent, per-session:
+    # ✓ Token usage & costs
+    # ✓ Session timeline for replay
+    # ✓ Guardrail violations & anomalies
+
+    response = await openai.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": query}]
+    )
+    return response.choices[0].message.content
+
+# That's it. Open your dashboard.
+# app.agentshield.one`,
+  },
+  n8n: {
+    label: 'n8n · HTTP Request Node',
+    code: `// Add after your AI node in n8n
+
+Method: POST
+URL: https://api.agentshield.one/v1/track
+
+Headers:
+  Authorization: Bearer ags_live_xxxxx
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "agent": "my-n8n-workflow",
+  "model": "gpt-4o",
+  "input_tokens": {{ $json.usage.prompt_tokens }},
+  "output_tokens": {{ $json.usage.completion_tokens }}
+}
+
+// Costs appear in dashboard in real time.`,
+  },
+  cURL: {
+    label: 'terminal',
+    code: `curl -X POST https://api.agentshield.one/v1/track \\
+  -H "Authorization: Bearer ags_live_xxxxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "agent": "my-agent",
+    "model": "gpt-4o",
+    "input_tokens": 1250,
+    "output_tokens": 340
+  }'
+
+# Response:
+# {"tracked":true,"cost_usd":0.0185,"session_id":"ses_..."}`,
+  },
+  JavaScript: {
+    label: 'track.js',
+    code: `await fetch("https://api.agentshield.one/v1/track", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer ags_live_xxxxx",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    agent: "my-agent",
+    model: "gpt-4o",
+    input_tokens: 1250,
+    output_tokens: 340
+  })
+})
+
+// Works with Vercel AI SDK, Deno, Bun, Node.js
+// No SDK required.`,
+  },
+}
 
 export default function CodePreview() {
+  const [activeTab, setActiveTab] = useState<Tab>('Python')
+
   return (
     <section className="py-24 px-8">
       {/* Divider */}
@@ -71,7 +152,7 @@ export default function CodePreview() {
           {/* Left: copy */}
           <div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ color: '#fff' }}>
-              One decorator.
+              One API call.
               <br />
               <span
                 style={{
@@ -84,8 +165,8 @@ export default function CodePreview() {
               </span>
             </h2>
             <p className="text-base leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              No agent refactoring. No proxy servers. No infrastructure changes.
-              AgentShield instruments your existing code — one line at a time.
+              Any language. Any tool. Python, JavaScript, cURL, n8n, Make —
+              if it can send an HTTP POST, it works with AgentShield.
             </p>
 
             <div className="space-y-3">
@@ -120,13 +201,16 @@ export default function CodePreview() {
                 <div className="w-3 h-3 rounded-full" style={{ background: '#22c55e' }} />
               </div>
               <div className="flex items-center gap-0">
-                {TABS.map((tab, i) => (
+                {TABS.map((tab) => (
                   <button
                     key={tab}
+                    onClick={() => setActiveTab(tab)}
                     className="px-3 py-1 text-[11px] font-mono rounded-md transition-colors"
                     style={{
-                      color: i === 0 ? '#a78bfa' : 'rgba(255,255,255,0.25)',
-                      background: i === 0 ? 'rgba(124,58,237,0.15)' : 'transparent',
+                      color: activeTab === tab ? '#a78bfa' : 'rgba(255,255,255,0.25)',
+                      background: activeTab === tab ? 'rgba(124,58,237,0.15)' : 'transparent',
+                      cursor: 'pointer',
+                      border: 'none',
                     }}
                   >
                     {tab}
@@ -135,31 +219,27 @@ export default function CodePreview() {
               </div>
             </div>
 
-            {/* Code with line-by-line reveal */}
-            <pre className="p-5 text-[13px] font-mono leading-[1.75] overflow-x-auto" style={{ color: tx }}>
-              {LINES.map((tokens, i) => (
-                <div
-                  key={i}
-                  className="code-line flex gap-4"
-                  style={{ animationDelay: `${i * 80}ms` }}
-                >
+            <pre className="p-5 text-[13px] font-mono leading-[1.75] overflow-x-auto" style={{ color: 'rgba(255,255,255,0.7)', minHeight: 340 }}>
+              {TAB_CONTENT[activeTab].code.split('\n').map((line, i) => (
+                <div key={i} className="flex gap-4">
                   <span className="select-none w-5 text-right flex-shrink-0" style={{ color: 'rgba(255,255,255,0.12)' }}>
                     {i + 1}
                   </span>
-                  <span>
-                    {tokens.length === 0
-                      ? '\u00A0'
-                      : tokens.map((t, j) => (
-                          <span key={j} style={{ color: t.color }}>{t.text}</span>
-                        ))}
+                  <span style={{
+                    color: line.trimStart().startsWith('#') || line.trimStart().startsWith('//')
+                      ? 'rgba(255,255,255,0.25)'
+                      : line.includes('Bearer') || line.includes('ags_live')
+                      ? '#86efac'
+                      : line.includes('POST') || line.includes('Authorization') || line.includes('Content-Type')
+                      ? '#67e8f9'
+                      : line.includes('@shield') || line.includes('async def') || line.includes('await')
+                      ? '#a78bfa'
+                      : 'rgba(255,255,255,0.75)',
+                  }}>
+                    {line || '\u00A0'}
                   </span>
                 </div>
               ))}
-              {/* Result line */}
-              <div className="result-line flex gap-4 mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', animationDelay: `${LINES.length * 80 + 200}ms` }}>
-                <span className="select-none w-5 text-right flex-shrink-0" style={{ color: 'rgba(255,255,255,0.12)' }}>→</span>
-                <span style={{ color: ok }}>✅ Tracked: $0.034 · 847 tokens · 1.2s</span>
-              </div>
             </pre>
           </div>
         </div>

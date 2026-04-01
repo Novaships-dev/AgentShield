@@ -1,22 +1,25 @@
 'use client'
 
 const ROWS = [
-  { feature: 'Real-time cost tracking', shield: true, datadog: true, langsmith: false, custom: false },
-  { feature: 'Session Replay', shield: true, datadog: false, langsmith: true, custom: false },
-  { feature: 'Guardrails & PII redaction', shield: true, datadog: false, langsmith: false, custom: false },
-  { feature: 'AI-powered Smart Alerts', shield: true, datadog: false, langsmith: false, custom: false },
-  { feature: 'Cost Autopilot recommendations', shield: true, datadog: false, langsmith: false, custom: false },
-  { feature: 'Budget caps & kill switch', shield: true, datadog: false, langsmith: false, custom: false },
-  { feature: 'One-line SDK integration', shield: true, datadog: false, langsmith: true, custom: false },
-  { feature: 'AI-agent focused', shield: true, datadog: false, langsmith: true, custom: false },
-  { feature: 'Free tier', shield: true, datadog: false, langsmith: true, custom: false },
+  { feature: 'Real-time cost tracking',             shield: true,  langsmith: false, helicone: true,  langfuse: true,  provider: '✅ total only' },
+  { feature: 'Per-agent cost breakdown',             shield: true,  langsmith: false, helicone: false, langfuse: true,  provider: false },
+  { feature: 'Per-session cost breakdown',           shield: true,  langsmith: true,  helicone: false, langfuse: true,  provider: false },
+  { feature: 'Session Replay',                       shield: true,  langsmith: true,  helicone: false, langfuse: true,  provider: false },
+  { feature: 'Guardrails & PII redaction',           shield: true,  langsmith: false, helicone: false, langfuse: false, provider: false },
+  { feature: 'Budget caps per agent',                shield: true,  langsmith: false, helicone: false, langfuse: false, provider: '✅ total only' },
+  { feature: 'Kill switch per agent',                shield: true,  langsmith: false, helicone: false, langfuse: false, provider: false },
+  { feature: 'Anomaly detection',                    shield: true,  langsmith: false, helicone: false, langfuse: false, provider: false },
+  { feature: 'No-code support (n8n, Make, Zapier)', shield: true,  langsmith: false, helicone: false, langfuse: false, provider: false },
+  { feature: 'REST API (no SDK required)',           shield: true,  langsmith: false, helicone: true,  langfuse: true,  provider: false },
+  { feature: 'Free tier',                            shield: true,  langsmith: true,  helicone: true,  langfuse: true,  provider: true  },
 ]
 
 const COLS = [
-  { key: 'shield', label: 'AgentShield', highlight: true },
-  { key: 'datadog', label: 'Datadog', highlight: false },
-  { key: 'langsmith', label: 'LangSmith', highlight: false },
-  { key: 'custom', label: 'Custom', highlight: false },
+  { key: 'shield',    label: 'AgentShield',     highlight: true  },
+  { key: 'langsmith', label: 'LangSmith',       highlight: false },
+  { key: 'helicone',  label: 'Helicone',        highlight: false },
+  { key: 'langfuse',  label: 'Langfuse',        highlight: false },
+  { key: 'provider',  label: 'Provider Limits', highlight: false },
 ]
 
 type RowData = typeof ROWS[number]
@@ -103,6 +106,7 @@ export default function Comparison() {
                   <td className="px-6 py-3.5 text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{row.feature}</td>
                   {COLS.map(col => {
                     const val = row[col.key as keyof RowData]
+                    const isString = typeof val === 'string'
                     return (
                       <td
                         key={col.key}
@@ -111,7 +115,9 @@ export default function Comparison() {
                           background: col.highlight ? 'rgba(124,58,237,0.05)' : 'transparent',
                         }}
                       >
-                        {typeof val === 'boolean' && val ? (
+                        {isString ? (
+                          <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11 }}>{val}</span>
+                        ) : val === true ? (
                           col.highlight ? (
                             <span
                               className="check-pop inline-block text-base"
@@ -123,7 +129,7 @@ export default function Comparison() {
                             <span className="text-base" style={{ color: '#4ade80' }}>✓</span>
                           )
                         ) : (
-                          <span className="text-base" style={{ color: 'rgba(239,68,68,0.3)' }}>✗</span>
+                          <span className="text-base" style={{ color: 'rgba(255,255,255,0.15)' }}>✗</span>
                         )}
                       </td>
                     )
@@ -133,6 +139,13 @@ export default function Comparison() {
             </tbody>
           </table>
         </div>
+
+        <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 14, marginTop: 24, maxWidth: 640, margin: '24px auto 0', lineHeight: 1.7 }}>
+          OpenAI and Anthropic give you total spending limits.{' '}
+          <span style={{ color: '#e2d9f3' }}>AgentShield gives you per-agent, per-session cost attribution.</span>{' '}
+          Your support-agent has a $5/day budget. Your research-agent has $50/day.{' '}
+          Provider dashboards can&apos;t do that.
+        </p>
       </div>
     </section>
   )

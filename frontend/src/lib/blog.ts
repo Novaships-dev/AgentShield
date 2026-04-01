@@ -39,7 +39,7 @@ AI agents fail differently from traditional software. They don't throw exception
 
 **2. Session replay.** Every conversation reconstructed: prompts in, completions out, tool calls, timing, cost. Reproducible investigation of any issue.
 
-**3. Anomaly detection.** Statistical baselines per agent. When cost or latency spikes beyond 3σ from normal, alert immediately — not at end of month.
+**3. Anomaly detection.** Statistical baselines per agent. When cost or latency spikes beyond 3σ from normal, alert immediately — before it accumulates across sessions.
 
 **4. Guardrails + PII.** Before and after LLM calls: block prohibited content, redact PII from inputs, scan outputs for policy violations.
 

@@ -48,7 +48,7 @@ const FEATURES: Feature[] = [
   {
     Icon: BarChart3, tag: 'FORECAST', tagColor: '#8B5CF6', rgb: '139,92,246',
     title: 'Cost Forecast',
-    desc: 'Know your end-of-month bill before it arrives. Per agent, per team, with confidence intervals.',
+    desc: 'Know which agent caused the cost spike before it accumulates. Per agent, per team, with confidence intervals.',
     span: 'sm:col-span-1 lg:col-span-2',
   },
 ]
@@ -138,7 +138,7 @@ export default function BentoFeatures() {
             Everything your agents need to behave.
           </h2>
           <p className="text-base max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
-            One SDK. Three modules. Complete observability for AI agents in production.
+            One API call. Three modules. Complete observability for AI agents in production.
           </p>
         </div>
 
