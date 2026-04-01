@@ -44,20 +44,34 @@ export default function Navbar() {
           {[
             { label: 'Features', href: '#features' },
             { label: 'How it works', href: '#how-it-works' },
+            { label: 'Blog', href: '/blog' },
             { label: 'Pricing', href: '#pricing' },
             { label: 'Docs', href: '/docs' },
-          ].map(item => (
-            <a
-              key={item.label}
-              href={item.href}
-              className="text-sm transition-colors duration-200 no-underline"
-              style={{ color: 'rgba(255,255,255,0.6)' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
-            >
-              {item.label}
-            </a>
-          ))}
+          ].map(item =>
+            item.href.startsWith('/') && !item.href.startsWith('/#') ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="text-sm transition-colors duration-200 no-underline"
+                style={{ color: 'rgba(255,255,255,0.6)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <a
+                key={item.label}
+                href={item.href}
+                className="text-sm transition-colors duration-200 no-underline"
+                style={{ color: 'rgba(255,255,255,0.6)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+              >
+                {item.label}
+              </a>
+            ),
+          )}
         </div>
 
         {/* Desktop CTA */}
@@ -113,19 +127,32 @@ export default function Navbar() {
           {[
             { label: 'Features', href: '#features' },
             { label: 'How it works', href: '#how-it-works' },
+            { label: 'Blog', href: '/blog' },
             { label: 'Pricing', href: '#pricing' },
             { label: 'Docs', href: '/docs' },
-          ].map(item => (
-            <a
-              key={item.label}
-              href={item.href}
-              className="block text-sm no-underline"
-              style={{ color: 'rgba(255,255,255,0.7)' }}
-              onClick={() => setMenuOpen(false)}
-            >
-              {item.label}
-            </a>
-          ))}
+          ].map(item =>
+            item.href.startsWith('/') && !item.href.startsWith('/#') ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="block text-sm no-underline"
+                style={{ color: 'rgba(255,255,255,0.7)' }}
+                onClick={() => setMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <a
+                key={item.label}
+                href={item.href}
+                className="block text-sm no-underline"
+                style={{ color: 'rgba(255,255,255,0.7)' }}
+                onClick={() => setMenuOpen(false)}
+              >
+                {item.label}
+              </a>
+            ),
+          )}
           <div className="pt-2 flex flex-col gap-3">
             <Link href="/login" className="text-sm no-underline" style={{ color: 'rgba(255,255,255,0.6)' }}>
               Sign in

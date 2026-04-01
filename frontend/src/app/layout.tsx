@@ -27,6 +27,8 @@ export const metadata: Metadata = {
     'AI agent monitoring',
     'LLM cost tracking',
     'agent observability',
+    'LLM observability',
+    'AI cost tracking',
     'guardrails',
     'session replay',
     'OpenAI cost tracking',
@@ -82,6 +84,23 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'SoftwareApplication',
+              name: 'AgentShield',
+              url: 'https://agentshield.one',
+              applicationCategory: 'DeveloperApplication',
+              operatingSystem: 'Web',
+              description:
+                'AI agent observability platform — monitor costs, replay sessions, and enforce guardrails for your LLM applications.',
+              offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+              author: { '@type': 'Person', name: 'Nova', url: 'https://x.com/NovaShips' },
+            }),
+          }}
+        />
         {children}
         {/* Plausible analytics — agentshield.one */}
         <Script

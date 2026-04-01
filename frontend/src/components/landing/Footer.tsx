@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 const LINKS = [
+  { label: 'Blog', href: '/blog' },
   { label: 'Privacy', href: '/privacy' },
   { label: 'Terms', href: '/terms' },
   { label: 'Status', href: 'https://status.agentshield.one' },
