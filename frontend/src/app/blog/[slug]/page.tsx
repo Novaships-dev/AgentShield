@@ -1,7 +1,8 @@
+import React from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { articles, getArticleBySlug, type Article } from '@/lib/blog'
+import { articles, getArticleBySlug } from '@/lib/blog'
 
 // ── Static generation ─────────────────────────────────────────────────────────
 
