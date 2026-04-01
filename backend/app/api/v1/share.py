@@ -47,7 +47,7 @@ async def share_session(
 
     # Check session ownership
     session_res = (
-        db.table("sessions")
+        db.table("agent_sessions")
         .select("id, session_id")
         .eq("organization_id", org_id)
         .eq("session_id", session_id)

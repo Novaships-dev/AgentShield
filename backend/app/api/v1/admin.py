@@ -34,7 +34,7 @@ async def admin_overview(
     users = db.table("users").select("id", count="exact").execute()
     agents = db.table("agents").select("id", count="exact").execute()
     events = db.table("events").select("id", count="exact").execute()
-    sessions = db.table("sessions").select("id", count="exact").execute()
+    sessions = db.table("agent_sessions").select("id", count="exact").execute()
 
     cost_result = db.table("events").select("cost_usd").execute()
     total_cost = sum(float(e.get("cost_usd", 0) or 0) for e in (cost_result.data or []))

@@ -31,7 +31,7 @@ class SessionService:
         try:
             # Try to fetch existing session
             existing = (
-                self._db.table("sessions")
+                self._db.table("agent_sessions")
                 .select("id,total_steps,total_cost_usd,total_tokens,status,agent_ids")
                 .eq("organization_id", org_id)
                 .eq("session_id", session_id)
@@ -51,7 +51,7 @@ class SessionService:
                 if agent_id not in agent_ids:
                     agent_ids = agent_ids + [agent_id]
 
-                self._db.table("sessions").update({
+                self._db.table("agent_sessions").update({
                     "total_steps": new_steps,
                     "total_cost_usd": new_cost,
                     "total_tokens": new_tokens,
@@ -61,7 +61,7 @@ class SessionService:
                 }).eq("organization_id", org_id).eq("session_id", session_id).execute()
             else:
                 agent_ids = [agent_id]
-                self._db.table("sessions").insert({
+                self._db.table("agent_sessions").insert({
                     "id": session_id,
                     "organization_id": org_id,
                     "session_id": session_id,

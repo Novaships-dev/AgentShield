@@ -44,7 +44,7 @@ async def list_sessions(
     """
     org_id = user.organization_id
 
-    query = db.table("sessions").select("*", count="exact").eq("organization_id", org_id)
+    query = db.table("agent_sessions").select("*", count="exact").eq("organization_id", org_id)
 
     # Date range filter
     if range == "today":

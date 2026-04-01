@@ -23,7 +23,7 @@ class ReplayService:
         """
         # Load session
         session_result = (
-            self._db.table("sessions")
+            self._db.table("agent_sessions")
             .select("*")
             .eq("organization_id", org_id)
             .eq("session_id", session_id)
