@@ -62,7 +62,6 @@ class SessionService:
             else:
                 agent_ids = [agent_id]
                 self._db.table("agent_sessions").insert({
-                    "id": session_id,
                     "organization_id": org_id,
                     "session_id": session_id,
                     "agent_ids": agent_ids,
