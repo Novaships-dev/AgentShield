@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import NewsletterForm from './NewsletterForm'
 
 const LINKS = [
   { label: 'Blog', href: '/blog' },
@@ -15,6 +16,15 @@ export default function Footer() {
       className="py-10 px-8"
       style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
     >
+      <div style={{
+        maxWidth: 1100,
+        margin: '0 auto',
+        padding: '40px 32px 32px',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        marginBottom: 0,
+      }}>
+        <NewsletterForm />
+      </div>
       <div className="max-w-[1100px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-2">
