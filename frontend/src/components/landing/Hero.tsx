@@ -4,6 +4,7 @@ import Link from 'next/link'
 import GlowButton from '@/components/ui/GlowButton'
 import { track, EVENTS } from '@/lib/analytics'
 import { BarChart3, RefreshCcw, ShieldCheck } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 /* ---------- particle seed (deterministic positions) ---------- */
 const PARTICLES = Array.from({ length: 26 }, (_, i) => {
@@ -27,6 +28,16 @@ const ORBS = [
 ] as const
 
 export default function Hero() {
+  const [demoOpen, setDemoOpen] = useState(false)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDemoOpen(false)
+    }
+    if (demoOpen) window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [demoOpen])
+
   return (
     <section
       className="relative flex items-center justify-center text-center overflow-hidden"
@@ -306,6 +317,7 @@ export default function Hero() {
             <GlowButton size="lg">Start Free →</GlowButton>
           </Link>
           <button
+            onClick={() => setDemoOpen(true)}
             className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200"
             style={{
               background: 'rgba(255,255,255,0.05)',
@@ -336,6 +348,105 @@ export default function Hero() {
         className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
         style={{ background: 'linear-gradient(transparent, #030014)' }}
       />
+
+      {/* Demo Modal */}
+      {demoOpen && (
+        <div
+          onClick={() => setDemoOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            background: 'rgba(3,0,20,0.92)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '100%',
+              maxWidth: 960,
+              background: '#0f0a1e',
+              border: '1px solid rgba(124,58,237,0.35)',
+              borderRadius: 16,
+              overflow: 'hidden',
+              boxShadow: '0 0 100px rgba(124,58,237,0.18), 0 40px 80px rgba(0,0,0,0.6)',
+            }}
+          >
+            {/* Header bar */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              background: 'rgba(255,255,255,0.02)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: '#a78bfa',
+                  letterSpacing: '-0.3px',
+                }}>
+                  ⬡ AgentShield
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
+                  — Product Demo
+                </span>
+              </div>
+              <button
+                onClick={() => setDemoOpen(false)}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  color: 'rgba(255,255,255,0.6)',
+                  fontSize: 14,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.14)'
+                  e.currentTarget.style.color = '#fff'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+                  e.currentTarget.style.color = 'rgba(255,255,255,0.6)'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Video */}
+            <video
+              src="/agentshield-demo-full.mp4"
+              controls
+              autoPlay
+              playsInline
+              style={{
+                width: '100%',
+                display: 'block',
+                maxHeight: '75vh',
+                background: '#030014',
+              }}
+            />
+          </div>
+        </div>
+      )}
     </section>
   )
 }
