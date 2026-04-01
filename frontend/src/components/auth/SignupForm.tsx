@@ -30,6 +30,19 @@ export default function SignupForm() {
       setState('error')
       setErrorMsg(error.message)
     } else {
+      // Fire and forget — welcome email
+      try {
+        const { getAuthHeaders } = await import('@/lib/auth-header')
+        const headers = await getAuthHeaders()
+        fetch('https://api.agentshield.one/v1/auth/welcome', {
+          method: 'POST',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ first_name: '' }),
+        }).catch(() => {}) // silently ignore errors
+      } catch {
+        // non-blocking — ignore
+      }
+
       window.location.replace('/setup')
     }
   }
