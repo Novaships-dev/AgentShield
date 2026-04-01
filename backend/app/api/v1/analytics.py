@@ -43,3 +43,32 @@ async def get_analytics(
         team_label=team_label,
         granularity=granularity,
     )
+
+
+@router.get(
+    "/v1/analytics/summary",
+    summary="Get organization summary including plan",
+)
+async def get_analytics_summary(
+    user: User = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    """Return organization info including plan, for the billing page."""
+    org_row = (
+        db.table("organizations")
+        .select("id, name, plan, max_agents, max_requests, modules_enabled, stripe_customer_id, stripe_subscription_id")
+        .eq("id", user.organization_id)
+        .maybe_single()
+        .execute()
+    )
+    org_data = org_row.data if org_row and org_row.data else {}
+    return {
+        "organization": {
+            "plan": org_data.get("plan", "free"),
+            "stripe_customer_id": org_data.get("stripe_customer_id"),
+            "stripe_subscription_id": org_data.get("stripe_subscription_id"),
+            "max_agents": org_data.get("max_agents", 1),
+            "max_requests": org_data.get("max_requests", 10000),
+            "modules_enabled": org_data.get("modules_enabled", []),
+        }
+    }
