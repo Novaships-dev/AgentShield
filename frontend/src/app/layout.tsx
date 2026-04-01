@@ -36,6 +36,9 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Nova', url: 'https://github.com/NovaShips' }],
   creator: 'Nova',
+  verification: {
+    google: '0TYiVDajcU5iokWwEgY9B6BMl9ge3sGNnrZDalRR2cw',
+  },
   openGraph: {
     title: 'AgentShield — The complete observability suite for AI agents',
     description:
@@ -109,6 +112,18 @@ export default function RootLayout({
           src="https://plausible.io/js/script.tagged-events.js"
           strategy="afterInteractive"
         />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-WBZD30G3T3"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-WBZD30G3T3');
+          `}
+        </Script>
       </body>
     </html>
   )
