@@ -286,19 +286,9 @@ def _audit(org_id: str, user_id: str | None, action: str, resource_type: str, re
 def _send_plan_activated_email(org_id: str, plan: str, db) -> None:
     try:
         owner = db.table("users").select("email").eq("organization_id", org_id).eq("role", "owner").maybe_single().execute()
-        if owner.data:
+        if owner and owner.data:
             from app.services.brevo import BrevoService
-            svc = BrevoService()
-            plan_names = {"starter": "Starter", "pro": "Pro", "team": "Team"}
-            svc._post("/smtp/email", {
-                "sender": {"name": "AgentShield", "email": "alerts@agentshield.one"},
-                "to": [{"email": owner.data["email"]}],
-                "subject": f"🎉 Welcome to AgentShield {plan_names.get(plan, plan)}!",
-                "htmlContent": (
-                    f"<p>Your subscription to AgentShield <strong>{plan_names.get(plan, plan)}</strong> is now active.</p>"
-                    f"<p><a href='https://app.agentshield.one/dashboard'>Open Dashboard →</a></p>"
-                ),
-            })
+            BrevoService().send_upgrade_email(to_email=owner.data["email"], plan=plan)
     except Exception as exc:
         logger.error(f"[stripe] plan activated email failed: {exc}")
 
@@ -306,19 +296,9 @@ def _send_plan_activated_email(org_id: str, plan: str, db) -> None:
 def _send_payment_failed_email(org_id: str, grace_end: datetime, db) -> None:
     try:
         owner = db.table("users").select("email").eq("organization_id", org_id).eq("role", "owner").maybe_single().execute()
-        if owner.data:
+        if owner and owner.data:
             from app.services.brevo import BrevoService
-            svc = BrevoService()
-            svc._post("/smtp/email", {
-                "sender": {"name": "AgentShield", "email": "alerts@agentshield.one"},
-                "to": [{"email": owner.data["email"]}],
-                "subject": "⚠️ AgentShield — Payment failed",
-                "htmlContent": (
-                    f"<p>Your payment has failed. You have a 7-day grace period until "
-                    f"<strong>{grace_end.strftime('%B %d, %Y')}</strong> to update your payment method.</p>"
-                    f"<p><a href='https://app.agentshield.one/dashboard/settings'>Update Payment →</a></p>"
-                ),
-            })
+            BrevoService().send_payment_failed_email(to_email=owner.data["email"], grace_end=grace_end)
     except Exception as exc:
         logger.error(f"[stripe] payment failed email failed: {exc}")
 
@@ -326,18 +306,8 @@ def _send_payment_failed_email(org_id: str, grace_end: datetime, db) -> None:
 def _send_plan_downgraded_email(org_id: str, db) -> None:
     try:
         owner = db.table("users").select("email").eq("organization_id", org_id).eq("role", "owner").maybe_single().execute()
-        if owner.data:
+        if owner and owner.data:
             from app.services.brevo import BrevoService
-            svc = BrevoService()
-            svc._post("/smtp/email", {
-                "sender": {"name": "AgentShield", "email": "alerts@agentshield.one"},
-                "to": [{"email": owner.data["email"]}],
-                "subject": "AgentShield — Your subscription has been cancelled",
-                "htmlContent": (
-                    "<p>Your AgentShield subscription has been cancelled. Your account has been downgraded to the Free plan.</p>"
-                    "<p>Your data is preserved. You can resubscribe at any time.</p>"
-                    "<p><a href='https://app.agentshield.one/dashboard/settings'>Resubscribe →</a></p>"
-                ),
-            })
+            BrevoService().send_downgrade_email(to_email=owner.data["email"])
     except Exception as exc:
         logger.error(f"[stripe] plan downgraded email failed: {exc}")

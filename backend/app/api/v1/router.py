@@ -4,6 +4,7 @@ from app.api.v1 import (
     track, agents, api_keys, sessions, analytics, ws,
     alerts, budgets, forecasts, share, guardrails, pii, violations, recommendations,
     billing, teams, audit, webhooks, reports, slack, admin,
+    auth_hooks, newsletter,
 )
 
 router = APIRouter()
@@ -28,3 +29,5 @@ router.include_router(webhooks.router)
 router.include_router(reports.router)
 router.include_router(slack.router)
 router.include_router(admin.router)
+router.include_router(auth_hooks.router)
+router.include_router(newsletter.router)

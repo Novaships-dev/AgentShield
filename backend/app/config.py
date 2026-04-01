@@ -37,6 +37,7 @@ class Settings(BaseSettings):
 
     # Brevo (optional — email notifications)
     brevo_api_key: str = ""
+    brevo_newsletter_list_id: str = ""
 
     # Anthropic (optional — Smart Alerts, Cost Autopilot)
     anthropic_api_key: str = ""
