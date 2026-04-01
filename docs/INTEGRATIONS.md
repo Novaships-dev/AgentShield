@@ -479,7 +479,7 @@ Voir DEPLOY.md section 3 pour les détails.
 
 ---
 
-## 11. VERCEL
+## 14. VERCEL
 
 ### Rôle
 Hébergement frontend : Next.js SSR + static, Edge Functions.
@@ -496,7 +496,7 @@ Voir DEPLOY.md section 4 pour les détails.
 
 ---
 
-## 12. RÉSUMÉ DES COÛTS D'INFRASTRUCTURE
+## 15. RÉSUMÉ DES COÛTS D'INFRASTRUCTURE
 
 ### Au launch (0-50 clients)
 
@@ -533,7 +533,7 @@ Voir DEPLOY.md section 4 pour les détails.
 
 ---
 
-## 13. CHECKLIST NOUVELLE INTÉGRATION
+## 16. CHECKLIST NOUVELLE INTÉGRATION
 
 ```
 □ Le service est documenté dans ce fichier (INTEGRATIONS.md)
@@ -550,3 +550,58 @@ Voir DEPLOY.md section 4 pour les détails.
 
 > **Règle :** Chaque service tiers est un point de défaillance potentiel. Pour chaque intégration, définir : que se passe-t-il si ce service est down pendant 1 heure ?
 > AgentShield doit continuer à fonctionner en mode dégradé — jamais crash complet.
+
+---
+
+## 11. GOOGLE ANALYTICS GA4
+
+### Rôle
+Tracking des visites sur `agentshield.one` — pages vues, sources de trafic, conversions vers `/setup`.
+
+### Configuration
+- Measurement ID : `G-WBZD30G3T3`
+- Implémentation : script `gtag.js` dans `frontend/src/app/layout.tsx` via Next.js `Script` avec `strategy="afterInteractive"`
+- Associé à Google Search Console pour les données keyword
+
+### Ce qui est tracké
+- Pages vues sur la landing et le blog
+- Source/medium de chaque visite
+- Taux de conversion landing → `/setup`
+
+---
+
+## 12. GOOGLE SEARCH CONSOLE
+
+### Rôle
+Indexation SEO de `agentshield.one` — soumettre le sitemap, monitorer les keywords, demander l'indexation.
+
+### Configuration
+- Propriété : `agentshield.one` (domaine complet)
+- Vérification : DNS TXT record `google-site-verification=0TYiVDajcU5iokWwEgY9B6BMl9ge3sGNnrZDalRR2cw` sur Porkbun
+- Sitemap soumis : `https://agentshield.one/sitemap.xml`
+- Associé à GA4 : oui (Paramètres → Associations)
+
+### Pages indexées
+- `/` → priorité 1.0
+- `/blog/*` → priorité 0.7-0.85
+- `/integrations/*` → priorité 0.7-0.8
+- `/tools/cost-calculator` → priorité 0.75
+- `/docs/*` → priorité 0.7-0.9
+
+---
+
+## 13. LOOKER STUDIO
+
+### Rôle
+Dashboard marketing embarqué dans `/admin/analytics` — visualisation du trafic GA4 sans quitter l'admin.
+
+### Configuration
+- Report ID : `422e5a11-6783-45e7-ac00-780a5db2ed6e`
+- Page ID : `TkwtF`
+- URL embed : `https://lookerstudio.google.com/embed/reporting/422e5a11-6783-45e7-ac00-780a5db2ed6e/page/TkwtF`
+- Accès : public (lien de partage activé) — données GA4 visibles en lecture seule
+- Source de données : GA4 `AgentShield Landing` / `agentshield.one`
+
+### Implémentation
+Iframe dans `frontend/src/app/(admin)/admin/analytics/page.tsx`.
+Hauteur : `calc(100vh - 180px)`, minHeight 600px.

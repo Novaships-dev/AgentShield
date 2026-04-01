@@ -112,8 +112,14 @@ ANTHROPIC_TIMEOUT=30                   # Timeout en secondes
 ```bash
 # ── Brevo ────────────────────────────────────────────
 BREVO_API_KEY=xkeysib-...             # Clé API Brevo
-BREVO_SENDER_EMAIL=alerts@agentshield.one  # Email expéditeur
-BREVO_SENDER_NAME=AgentShield          # Nom expéditeur
+BREVO_SENDER_EMAIL=hello@agentshield.one   # Adresse expéditeur vérifiée dans Brevo
+                                            # Doit correspondre à un expéditeur vérifié
+                                            # dans Brevo → Paramètres → Expéditeurs
+BREVO_SENDER_NAME=AgentShield              # Nom affiché dans les emails
+
+BREVO_NEWSLETTER_LIST_ID=3                  # ID entier de la liste newsletter dans Brevo
+                                            # Brevo → Contacts → Listes → #3 "Newsletter AgentShield"
+                                            # Utilisé par POST /v1/newsletter/subscribe
 ```
 
 ### Slack
