@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { AuthProvider } from '@/components/providers/AuthProvider'
-import { LayoutDashboard, Building2, Users, Activity, DollarSign, ArrowLeft } from 'lucide-react'
+import { LayoutDashboard, Building2, Users, Activity, DollarSign, BarChart3, ArrowLeft } from 'lucide-react'
 
 const ADMIN_EMAIL = 'novaships.dev@outlook.com'
 
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Events', href: '/admin/events', icon: Activity },
   { label: 'Revenue', href: '/admin/revenue', icon: DollarSign },
+  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
 ]
 
 function AdminContent({ children }: { children: React.ReactNode }) {
