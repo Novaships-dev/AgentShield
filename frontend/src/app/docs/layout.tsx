@@ -11,6 +11,7 @@ const SIDEBAR = [
   {
     section: 'API',
     items: [
+      { label: 'REST API (no SDK)', href: '/docs/rest-api' },
       { label: 'API Reference', href: '/docs/api' },
       { label: 'Authentication', href: '/docs/api#authentication' },
       { label: 'Events', href: '/docs/api#events' },

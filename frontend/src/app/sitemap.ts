@@ -29,7 +29,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/integrations/anthropic`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: `${BASE}/integrations/llamaindex`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
     { url: `${BASE}/integrations/autogen`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${BASE}/integrations/n8n`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${BASE}/integrations/make`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${BASE}/integrations/zapier`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${BASE}/integrations/flowise`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${BASE}/integrations/javascript`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
     // Tools
     { url: `${BASE}/tools/cost-calculator`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75 },
+    // Compare
+    { url: `${BASE}/compare/langsmith`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75 },
+    { url: `${BASE}/compare/helicone`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75 },
+    { url: `${BASE}/compare/langfuse`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75 },
+    // Docs
+    { url: `${BASE}/docs/rest-api`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
   ]
 }

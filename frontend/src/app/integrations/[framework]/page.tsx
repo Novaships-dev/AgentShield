@@ -106,6 +106,147 @@ with shield.session(agent_id="autogen-crew") as session:
     user_proxy.initiate_chat(assistant, message=task)
     session.track(messages=assistant.chat_messages)`,
   },
+  n8n: {
+    name: 'n8n',
+    description: 'Monitor what your n8n AI workflows cost per run. No code needed — just add one HTTP Request node after your AI call.',
+    color: '#EA4B71',
+    useCase: 'n8n workflows using OpenAI, Anthropic, or any LLM API node',
+    codeExample: `// Step 1: Add an HTTP Request node after your AI node
+// Step 2: Configure it exactly like this:
+
+Method: POST
+URL: https://api.agentshield.one/v1/track
+
+Headers:
+  Authorization: Bearer ags_live_xxxxx
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "agent": "my-n8n-workflow",
+  "model": "gpt-4o",
+  "input_tokens": {{ $json.usage.prompt_tokens }},
+  "output_tokens": {{ $json.usage.completion_tokens }}
+}
+
+// That's it. Costs appear in your dashboard in real time.
+// No SDK. No code changes to your existing workflow.`,
+  },
+  make: {
+    name: 'Make',
+    description: 'Track what your Make scenarios spend on AI APIs. Setup in 2 minutes with the HTTP module — no code, no SDK.',
+    color: '#6D00CC',
+    useCase: 'Make (Integromat) scenarios using OpenAI, Anthropic, or any AI module',
+    codeExample: `// Step 1: Add an HTTP module after your AI module
+// Step 2: Configure it exactly like this:
+
+Module: HTTP > Make a request
+URL: https://api.agentshield.one/v1/track
+Method: POST
+
+Headers:
+  Authorization: Bearer ags_live_xxxxx
+  Content-Type: application/json
+
+Body type: Raw
+Content type: JSON (application/json)
+
+Body:
+{
+  "agent": "my-make-scenario",
+  "model": "gpt-4o",
+  "input_tokens": {{ai_module.usage.prompt_tokens}},
+  "output_tokens": {{ai_module.usage.completion_tokens}}
+}
+
+// Costs appear in your dashboard immediately.`,
+  },
+  zapier: {
+    name: 'Zapier',
+    description: 'See what your Zapier AI actions actually cost per run. Add a Webhooks step — no code required.',
+    color: '#FF4A00',
+    useCase: 'Zapier Zaps using OpenAI, Anthropic, or any AI action',
+    codeExample: `// Step 1: Add a Webhooks by Zapier step after your AI action
+// Step 2: Configure it exactly like this:
+
+Action event: POST
+URL: https://api.agentshield.one/v1/track
+
+Headers:
+  Authorization: Bearer ags_live_xxxxx
+
+Payload type: JSON
+
+Data:
+  agent: my-zapier-zap
+  model: gpt-4o
+  input_tokens: {{ai_step.usage.prompt_tokens}}
+  output_tokens: {{ai_step.usage.completion_tokens}}
+
+// No SDK. No code. Costs tracked per Zap run.`,
+  },
+  flowise: {
+    name: 'Flowise',
+    description: 'Track what your Flowise chatflows cost per conversation. API integration, no proxy needed.',
+    color: '#2B6CB0',
+    useCase: 'Flowise chatflows and agent flows with any LLM node',
+    codeExample: `// Option 1: Use the Flowise Custom Tool node
+// Add an HTTP Request tool that POSTs to AgentShield
+
+// Option 2: Track from your backend after calling Flowise API
+const response = await fetch('https://your-flowise/api/v1/prediction/...', {
+  method: 'POST',
+  body: JSON.stringify({ question: userInput })
+})
+const result = await response.json()
+
+// Then track to AgentShield:
+await fetch('https://api.agentshield.one/v1/track', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer ags_live_xxxxx',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    agent: 'my-flowise-chatflow',
+    model: result.model || 'gpt-4o',
+    input_tokens: result.tokenUsage?.promptTokens,
+    output_tokens: result.tokenUsage?.completionTokens
+  })
+})`,
+  },
+  javascript: {
+    name: 'JavaScript',
+    description: 'Monitor LLM costs in your JavaScript or Node.js app with a single fetch() call. No SDK, no proxy, no setup.',
+    color: '#F7DF1E',
+    useCase: 'Node.js, Deno, Bun, Vercel AI SDK, and any browser/server JS environment',
+    codeExample: `// Works with any JS environment — Node.js, Deno, Bun, Vercel Edge
+
+async function trackAgentCall(agentName, model, usage) {
+  await fetch('https://api.agentshield.one/v1/track', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ags_live_xxxxx',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      agent: agentName,
+      model: model,
+      input_tokens: usage.prompt_tokens,
+      output_tokens: usage.completion_tokens
+    })
+  })
+}
+
+// Example with OpenAI SDK:
+const completion = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: prompt }]
+})
+
+await trackAgentCall('my-agent', 'gpt-4o', completion.usage)
+// Per-agent costs now visible in your dashboard.`,
+  },
 }
 
 export function generateStaticParams() {

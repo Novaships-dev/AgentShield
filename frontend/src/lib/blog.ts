@@ -184,6 +184,176 @@ Teams that instrument LLM cost tracking recover the cost of the tooling within w
 
 Track everything. Optimize what matters. Cap the rest.`,
   },
+  {
+    slug: 'n8n-ai-cost-tracking',
+    title: 'How to Track AI Agent Costs in n8n',
+    description:
+      'Your n8n workflows call OpenAI or Anthropic — but do you know what each run costs? This step-by-step guide shows how to add cost tracking in under 5 minutes.',
+    date: '2025-04-05',
+    readTime: '5 min read',
+    tags: ['n8n', 'Cost Tracking', 'No-Code', 'Tutorial'],
+    content: `## The Problem With n8n AI Workflows
+
+n8n makes it easy to connect AI models to your workflows. OpenAI node here, Anthropic node there, and suddenly you have a powerful automation. What you don't have is any visibility into what each run costs.
+
+The provider dashboard shows your total API spend. It doesn't show which workflow spent what, which run spiked, or which automation is running 10x more than expected.
+
+## What You Need
+
+Before you start, you need:
+
+- An n8n instance (cloud or self-hosted)
+- An AI node in your workflow (OpenAI, Anthropic, or any LLM)
+- An AgentShield account — free at agentshield.one
+
+## Step 1: Get Your AgentShield API Key
+
+Sign up at agentshield.one → Settings → API Keys → Create key.
+Your key starts with \`ags_live_\`.
+
+## Step 2: Find Where Your AI Node Outputs Token Usage
+
+Most LLM nodes in n8n return token usage in the response. For OpenAI:
+
+\`\`\`
+$json.usage.prompt_tokens
+$json.usage.completion_tokens
+\`\`\`
+
+For Anthropic:
+\`\`\`
+$json.usage.input_tokens
+$json.usage.output_tokens
+\`\`\`
+
+## Step 3: Add an HTTP Request Node
+
+After your AI node, add a new node: **HTTP Request**.
+
+Configure it exactly like this:
+
+\`\`\`
+Method: POST
+URL: https://api.agentshield.one/v1/track
+
+Headers:
+  Authorization: Bearer ags_live_xxxxx
+  Content-Type: application/json
+
+Body (JSON):
+{
+  "agent": "my-n8n-workflow",
+  "model": "gpt-4o",
+  "input_tokens": {{ $json.usage.prompt_tokens }},
+  "output_tokens": {{ $json.usage.completion_tokens }}
+}
+\`\`\`
+
+Replace \`my-n8n-workflow\` with a name that identifies this workflow in your dashboard.
+
+## Step 4: Run Your Workflow
+
+Execute the workflow. In AgentShield's dashboard, you'll see:
+
+- Cost per run, in real time
+- Token breakdown (input vs output)
+- Cost trend over time for this workflow
+- Anomaly detection — if a run costs 3x the baseline, you get an alert
+
+## Setting Budget Caps
+
+Once you're tracking costs, you can set a budget cap per workflow. If your research workflow hits $5 in a day, AgentShield can send you a Slack alert or freeze the workflow automatically.
+
+This is the per-agent, per-session visibility that your provider dashboard doesn't give you.
+
+## Conclusion
+
+Five minutes of setup. An HTTP Request node. That's all it takes to go from zero visibility to complete cost attribution for your n8n AI workflows.
+
+Track costs, catch spikes, optimize what matters.`,
+  },
+  {
+    slug: 'provider-limits-vs-agentshield',
+    title: 'Why OpenAI Spending Limits Are Not Enough for AI Agent Teams',
+    description:
+      'OpenAI and Anthropic have spending limits. So why do teams still get blindsided by cost spikes? Because provider limits cap the total — not per agent, per session, per workflow.',
+    date: '2025-04-08',
+    readTime: '6 min read',
+    tags: ['Cost', 'Monitoring', 'Provider Limits', 'Best Practices'],
+    content: `## Provider Limits Are Real — And Insufficient
+
+OpenAI has spending limits. Anthropic has credit caps (and charges upfront). Google Cloud has billing alerts. Every major AI provider gives you some way to cap your total spend.
+
+So why do AI teams still get blindsided by unexpected cost spikes?
+
+Because total caps tell you when you've spent too much. They don't tell you which agent caused it.
+
+## What Provider Limits Actually Show You
+
+Here's what you see in the OpenAI dashboard:
+
+- Total tokens used this month
+- Total cost this month
+- A rate limit (requests per minute)
+- A hard cap (stop everything at $X)
+
+That's useful. It's not enough.
+
+## The Attribution Problem
+
+Imagine you have three AI agents in production:
+
+- \`support-agent\` — handles customer queries, runs 500x/day
+- \`research-agent\` — long context, runs 20x/day
+- \`classifier-agent\` — cheap, runs 2000x/day
+
+Your OpenAI dashboard says you spent $340 this month. Which agent spent what? You don't know. All three share the same API key.
+
+Now imagine your spend jumps to $680 in week two. Which agent doubled? Did \`research-agent\` start looping? Did someone change the \`support-agent\` prompt and triple the context? Did a bug trigger \`classifier-agent\` 10x too many times?
+
+The provider dashboard shows you $680. It cannot show you the cause.
+
+## What Per-Agent Attribution Looks Like
+
+With per-agent tracking, the same scenario looks like this:
+
+\`\`\`
+support-agent:    $42/month  (normal)
+research-agent:   $280/month (⚠ 3x above baseline)
+classifier-agent: $18/month  (normal)
+
+research-agent breakdown:
+  → session #4847: $40 in one session (looped 97 times)
+  → Tuesday 14:32 UTC
+  → anomaly detected: 3.2σ above mean
+  → Slack alert sent
+  → budget cap hit: agent frozen automatically
+\`\`\`
+
+Now you know exactly where to look. You fix the loop in \`research-agent\`. Total cost goes back to normal. The whole thing takes 20 minutes.
+
+Without attribution, you're comparing month-over-month totals and guessing.
+
+## The Difference Between Total Caps and Per-Agent Caps
+
+Provider limits: "Stop all API calls when total spend hits $500/month."
+
+Per-agent budget caps: "Stop \`research-agent\` when it hits $50/month. Let \`support-agent\` and \`classifier-agent\` keep running."
+
+With total caps, one runaway agent can kill all your workflows. With per-agent caps, you isolate the problem automatically.
+
+## Note on Anthropic Billing
+
+Anthropic uses a prepaid credit model — you buy credits upfront, not monthly invoices. This makes a total spending limit even less useful as an operational tool, because you've already paid. Per-session attribution becomes more important, not less, because you want to know if your credits are being consumed efficiently before they run out.
+
+## What This Means in Practice
+
+The teams that get surprised by AI costs aren't the ones who forgot to set limits. They're the ones who set total limits and assumed that was enough.
+
+Per-agent cost attribution is the missing layer. It's the difference between knowing HOW MUCH and knowing WHERE.
+
+That per-agent, per-session breakdown is what AgentShield adds on top of whatever provider limits you already have.`,
+  },
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {
