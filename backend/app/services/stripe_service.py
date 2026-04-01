@@ -85,20 +85,25 @@ def create_portal_session(customer_id: str, return_url: str) -> str:
 
 def handle_webhook_event(payload: bytes, sig_header: str, redis_client, db_client) -> None:
     """Verify Stripe signature and dispatch to the appropriate handler (sync)."""
+    import json
     from app.config import settings
     stripe = _stripe()
 
+    # 1. Verify signature (uses Stripe SDK)
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, settings.stripe_webhook_secret)
-    except stripe.error.SignatureVerificationError:
+    except Exception as exc:
+        logger.error(f"[stripe] signature verification failed: {exc}")
         raise ValueError("Invalid Stripe signature")
-    except ValueError:
-        raise ValueError("Invalid payload")
 
-    event_data = dict(event)
-    event_id = event_data.get("id", "")
+    # 2. Parse payload as plain dict (bypass StripeObject issues)
+    event_dict = json.loads(payload)
+    event_id = event_dict.get("id", "")
+    event_type = event_dict.get("type", "")
 
-    # Idempotence — skip if already processed (TTL 48h)
+    logger.info(f"[stripe] received event {event_type} ({event_id})")
+
+    # 3. Idempotence — skip if already processed (TTL 48h)
     import asyncio
     try:
         loop = asyncio.get_event_loop()
@@ -110,6 +115,7 @@ def handle_webhook_event(payload: bytes, sig_header: str, redis_client, db_clien
         logger.info(f"[stripe] event {event_id} already processed — skipping")
         return
 
+    # 4. Dispatch to handler (passing plain dict, not StripeObject)
     handlers = {
         "checkout.session.completed": _handle_checkout_completed,
         "invoice.paid": _handle_invoice_paid,
@@ -118,15 +124,14 @@ def handle_webhook_event(payload: bytes, sig_header: str, redis_client, db_clien
         "customer.subscription.deleted": _handle_subscription_deleted,
     }
 
-    event_type = event_data.get("type")
     handler = handlers.get(event_type)
     if handler:
-        handler(event, db_client)
+        handler(event_dict, db_client)
         logger.info(f"[stripe] handled event {event_type} ({event_id})")
     else:
         logger.debug(f"[stripe] unhandled event type: {event_type}")
 
-    # Mark as processed
+    # 5. Mark as processed
     try:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(redis_client.setex(f"stripe_event:{event_id}", 172800, "1"))
@@ -152,40 +157,40 @@ def _apply_plan_to_org(org_id: str, plan: str, customer_id: str, subscription_id
     }).eq("id", org_id).execute()
 
 
-def _handle_checkout_completed(event, db) -> None:
-    session = event["data"]["object"]
-    metadata = getattr(session, "metadata", {}) or {}
-    if isinstance(metadata, str):
-        import json as _json
-        metadata = _json.loads(metadata)
-    org_id = metadata.get("organization_id") if isinstance(metadata, dict) else getattr(metadata, "organization_id", None)
-    plan = metadata.get("plan") if isinstance(metadata, dict) else getattr(metadata, "plan", None)
+def _handle_checkout_completed(event: dict, db) -> None:
+    session = event.get("data", {}).get("object", {})
+    metadata = session.get("metadata", {})
+    org_id = metadata.get("organization_id")
+    plan = metadata.get("plan")
+
+    logger.info(f"[stripe] checkout.completed — org_id={org_id}, plan={plan}, metadata={metadata}")
+
     if not org_id or not plan or plan not in PLAN_CONFIGS:
-        logger.warning("[stripe] checkout.completed: missing org_id or plan in metadata")
+        logger.warning(f"[stripe] checkout.completed: missing org_id or plan in metadata: {metadata}")
         return
 
     _apply_plan_to_org(
         org_id=org_id,
         plan=plan,
-        customer_id=getattr(session, "customer", "") or "",
-        subscription_id=getattr(session, "subscription", "") or "",
+        customer_id=session.get("customer", ""),
+        subscription_id=session.get("subscription", ""),
         db=db,
     )
     _audit(org_id, None, "plan.upgraded", "organization", org_id, {"plan": plan}, db)
     _send_plan_activated_email(org_id, plan, db)
 
 
-def _handle_invoice_paid(event, db) -> None:
-    invoice = event["data"]["object"]
-    customer_id = getattr(invoice, "customer", "") or ""
+def _handle_invoice_paid(event: dict, db) -> None:
+    invoice = event.get("data", {}).get("object", {})
+    customer_id = invoice.get("customer", "")
     org = _get_org_by_stripe_customer(customer_id, db)
     if org:
         logger.info(f"[stripe] invoice.paid for org {org['id']} — renewal confirmed")
 
 
-def _handle_payment_failed(event, db) -> None:
-    invoice = event["data"]["object"]
-    customer_id = getattr(invoice, "customer", "") or ""
+def _handle_payment_failed(event: dict, db) -> None:
+    invoice = event.get("data", {}).get("object", {})
+    customer_id = invoice.get("customer", "")
     org = _get_org_by_stripe_customer(customer_id, db)
     if not org:
         return
@@ -198,15 +203,14 @@ def _handle_payment_failed(event, db) -> None:
     _send_payment_failed_email(org["id"], grace_end, db)
 
 
-def _handle_subscription_updated(event, db) -> None:
-    subscription = event["data"]["object"]
-    customer_id = getattr(subscription, "customer", "") or ""
+def _handle_subscription_updated(event: dict, db) -> None:
+    subscription = event.get("data", {}).get("object", {})
+    customer_id = subscription.get("customer", "")
     org = _get_org_by_stripe_customer(customer_id, db)
     if not org:
         return
 
-    # Determine plan from price metadata (best-effort — metadata stored during checkout)
-    new_plan = _infer_plan_from_subscription(subscription)
+    new_plan = _infer_plan_from_subscription_dict(subscription)
     if not new_plan:
         logger.warning("[stripe] subscription.updated: cannot infer plan")
         return
@@ -216,7 +220,7 @@ def _handle_subscription_updated(event, db) -> None:
         org_id=org["id"],
         plan=new_plan,
         customer_id=customer_id,
-        subscription_id=getattr(subscription, "id", "") or "",
+        subscription_id=subscription.get("id", ""),
         db=db,
     )
 
@@ -225,11 +229,12 @@ def _handle_subscription_updated(event, db) -> None:
     _audit(org["id"], None, action, "organization", org["id"], {"from": old_plan, "to": new_plan}, db)
 
 
-def _handle_subscription_deleted(event, db) -> None:
-    subscription = event["data"]["object"]
-    customer_id = getattr(subscription, "customer", "") or ""
+def _handle_subscription_deleted(event: dict, db) -> None:
+    subscription = event.get("data", {}).get("object", {})
+    customer_id = subscription.get("customer", "")
     org = _get_org_by_stripe_customer(customer_id, db)
     if not org:
+        logger.warning(f"[stripe] subscription.deleted: no org for customer {customer_id}")
         return
 
     config = PLAN_CONFIGS["free"]
@@ -242,20 +247,18 @@ def _handle_subscription_deleted(event, db) -> None:
         "modules_enabled": config["modules"],
     }).eq("id", org["id"]).execute()
 
+    logger.info(f"[stripe] org {org['id']} downgraded to free")
     _audit(org["id"], None, "plan.downgraded", "organization", org["id"], {"plan": "free"}, db)
     _send_plan_downgraded_email(org["id"], db)
 
 
-def _infer_plan_from_subscription(subscription) -> str | None:
-    """Try to infer plan from subscription metadata or price ID."""
+def _infer_plan_from_subscription_dict(subscription: dict) -> str | None:
+    """Infer plan from subscription dict (plain JSON, not StripeObject)."""
     from app.config import settings
-    items_obj = getattr(subscription, "items", None) or {}
-    items_data = getattr(items_obj, "data", None) if not isinstance(items_obj, dict) else items_obj.get("data", [])
-    if not items_data:
+    items = subscription.get("items", {}).get("data", [])
+    if not items:
         return None
-    first_item = items_data[0]
-    price_obj = getattr(first_item, "price", None) if not isinstance(first_item, dict) else first_item.get("price", {})
-    price_id = getattr(price_obj, "id", "") if not isinstance(price_obj, dict) else price_obj.get("id", "")
+    price_id = items[0].get("price", {}).get("id", "")
     price_map = {
         settings.stripe_price_starter: "starter",
         settings.stripe_price_pro: "pro",
