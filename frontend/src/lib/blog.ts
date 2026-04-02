@@ -354,6 +354,281 @@ Per-agent cost attribution is the missing layer. It's the difference between kno
 
 That per-agent, per-session breakdown is what AgentShield adds on top of whatever provider limits you already have.`,
   },
+  {
+    slug: 'ai-agent-monitoring-tools-2026',
+    title: 'AI Agent Monitoring Tools Compared: 2026 Guide',
+    description:
+      'LangSmith, Helicone, Langfuse, or AgentShield? A practical comparison of the leading AI agent monitoring tools in 2026 — features, pricing, and when to use each.',
+    date: '2025-04-10',
+    readTime: '8 min read',
+    tags: ['Comparison', 'Monitoring', 'Tools', 'LangSmith', 'Helicone'],
+    content: `## The Market in 2026
+
+AI agent observability is a new category. A year ago, teams were logging prompts to a database and calling it monitoring. Today, there are purpose-built tools — and they differ significantly in architecture, scope, and philosophy.
+
+This guide compares the four main options: LangSmith, Helicone, Langfuse, and AgentShield.
+
+## Quick Summary
+
+| Tool | Best for | Proxy? | Budget caps? | No-code? |
+|------|----------|--------|--------------|----------|
+| LangSmith | LangChain teams | No | No | No |
+| Helicone | Zero-config logging | Yes | No | No |
+| Langfuse | Self-hosted / open source | No | No | No |
+| AgentShield | Per-agent attribution + enforcement | No | Yes | Yes |
+
+## LangSmith
+
+LangSmith is LangChain's observability platform. If you're building with LangGraph or LangChain Expression Language, the integration is seamless — traces appear automatically.
+
+**Strengths:** Deep LangChain integration, open source option, good UI for prompt debugging.
+
+**Limitations:** Requires LangChain. If you use raw OpenAI calls, CrewAI without LangChain, or any other framework, you're doing manual instrumentation. No budget caps, no kill switches, no no-code support.
+
+**Pricing:** Free tier available. Cloud version charges per trace at scale.
+
+**Verdict:** Best if you're 100% on LangChain and need deep tracing of chains and agents.
+
+## Helicone
+
+Helicone works as a proxy. You change your OpenAI base URL to point at Helicone's servers, and every call gets logged automatically.
+
+**Strengths:** Truly zero-config for OpenAI users, request caching, simple UI, good cost visibility.
+
+**Limitations:** All your production LLM traffic flows through Helicone's servers. Some teams have compliance requirements that make this difficult. No per-agent budget caps, no session replay, no guardrails.
+
+**Pricing:** Free tier. Usage-based above that.
+
+**Verdict:** Best for developers who want instant logging with zero code and are comfortable with the proxy architecture.
+
+## Langfuse
+
+Langfuse is open-source and can be self-hosted. It has good tracing, evaluation, and a solid UI. The cloud version is managed.
+
+**Strengths:** Open source, self-hostable, good tracing and evaluation features, active community.
+
+**Limitations:** Self-hosting means you own the infra. No per-agent budget caps or kill switches. No no-code support. No anomaly detection.
+
+**Pricing:** Open source is free (but you pay for infra). Cloud has usage-based pricing.
+
+**Verdict:** Best for teams with data sovereignty requirements and capacity to manage infrastructure.
+
+## AgentShield
+
+AgentShield focuses on three things: per-agent cost attribution, budget enforcement, and universal compatibility.
+
+**Strengths:** Per-agent and per-session cost breakdown, budget caps with automatic kill switches, anomaly detection, session replay, PII redaction, works with any tool (Python, JavaScript, n8n, Make, Zapier, cURL).
+
+**Limitations:** Newer product. Less community content than LangSmith or Langfuse.
+
+**Pricing:** Free tier. Paid plans from $49/month.
+
+**Verdict:** Best when you need to know which agent caused a cost spike — not just total spend — and want to enforce limits automatically.
+
+## The Key Differentiator
+
+All four tools show you what happened. Only AgentShield shows you which agent caused it and stops it automatically.
+
+Your OpenAI dashboard shows $340 this month. LangSmith, Helicone, and Langfuse show you the traces. AgentShield shows you that research-agent spent $280 and session #4847 looped 97 times — and already froze the agent before you checked.
+
+That per-agent attribution and automatic enforcement is the gap in the market.
+
+## Which One Should You Use?
+
+- LangChain shop, need deep tracing → **LangSmith**
+- Want instant logging, zero setup → **Helicone**
+- Need self-hosted, open source → **Langfuse**
+- Need per-agent budgets, no-code support, anomaly detection → **AgentShield**
+
+Most production teams end up needing AgentShield's enforcement features once their agents are running at scale.`,
+  },
+  {
+    slug: 'ai-agent-cost-mistakes',
+    title: '5 Mistakes That Make Your AI Agents Cost 10x More',
+    description:
+      'Most AI agent cost problems come from the same five patterns. Here\'s what they are, how much they cost, and how to fix each one.',
+    date: '2025-04-12',
+    readTime: '6 min read',
+    tags: ['Cost', 'Optimization', 'Best Practices'],
+    content: `## The Pattern Is Always the Same
+
+When an AI team gets hit with an unexpected cost spike, it's almost always one of five things. Not a provider pricing change. Not unusual traffic. One of five patterns that are completely preventable.
+
+Here they are, with the cost impact and the fix.
+
+## Mistake 1: Context Accumulation
+
+**What it is:** Multi-turn agents that include the full conversation history in every call.
+
+**The cost math:** A 100-turn conversation means call #100 sends 99 previous turns as context. If each turn is 200 tokens, call #100 sends 19,800 tokens just for history. At GPT-4 pricing, that's ~$0.20 per call — for context the model mostly ignores.
+
+**The fix:** Implement a context window strategy. Keep the last N turns. Summarize older turns with a cheap model. Most agents need the last 5-10 turns, not the full history.
+
+## Mistake 2: Tool Loops Without Retry Limits
+
+**What it is:** An agent that retries a failed tool call indefinitely.
+
+**The cost math:** A broken API endpoint causes your agent to retry 100 times before failing. Each retry = one LLM call. If each call costs $0.05, that's $5 from one broken request. At scale, one flaky dependency can cause thousands of dollars in unnecessary calls.
+
+**The fix:** Set a maximum retry count on every tool call. 3 retries with exponential backoff, then fail gracefully. AgentShield's budget caps catch this at the session level — if a session costs 3x the baseline, the agent freezes.
+
+## Mistake 3: Using the Wrong Model for the Task
+
+**What it is:** Using GPT-4 or Claude Opus for tasks that GPT-3.5 or Claude Haiku handles equally well.
+
+**The cost math:** GPT-4 Turbo costs ~$0.01/1K input tokens. GPT-3.5 Turbo costs ~$0.0005/1K input tokens. That's a 20x difference. If you're using GPT-4 to classify customer intent (a task GPT-3.5 handles fine), you're paying 20x too much for classification.
+
+**The fix:** Test your tasks on smaller models. Classification, summarization, and simple Q&A almost always work fine on cheaper models. AgentShield's Cost Autopilot surfaces exactly this recommendation based on your actual usage patterns.
+
+## Mistake 4: No Per-Agent Budget Caps
+
+**What it is:** Relying on provider-level total spending limits instead of per-agent caps.
+
+**The cost math:** Your provider cap is $500/month. One runaway agent loop spends $400 in 2 hours. Your other agents are now effectively frozen because the budget is exhausted — even though they're working correctly.
+
+**The fix:** Set per-agent budget caps. Your support-agent gets $5/day. Your research-agent gets $50/day. When either hits the cap, only that agent freezes — the others keep running. This is what provider dashboards can't do.
+
+## Mistake 5: No Monitoring At All
+
+**What it is:** Deploying agents to production with zero observability.
+
+**The cost math:** You don't know which agent is expensive. You don't know which sessions are outliers. You find out at the end of the month when the bill lands. By then, you've been paying for the problem for weeks.
+
+**The fix:** Instrument before you go to production. It takes one HTTP POST per LLM call to get per-agent, per-session cost attribution. The 5 minutes of setup cost pays back in the first week.
+
+## The Common Thread
+
+All five mistakes share the same root cause: no per-agent visibility. When you can see which agent costs what — per session, in real time — you catch these problems in hours, not weeks.
+
+AgentShield catches all five. Budget caps handle mistakes 2 and 4. Cost Autopilot surfaces mistake 3. Real-time monitoring prevents mistake 5. Context tracking catches mistake 1 before it compounds.`,
+  },
+  {
+    slug: 'ai-agent-budget-limits',
+    title: 'How to Set Budget Limits on AI Agents (Step by Step)',
+    description:
+      'A step-by-step guide to setting budget limits on your AI agents — the difference between provider total caps and per-agent caps, and how to set both.',
+    date: '2025-04-15',
+    readTime: '6 min read',
+    tags: ['Budget', 'Kill Switch', 'Tutorial', 'Cost'],
+    content: `## Two Types of Budget Limits
+
+Before you set budget limits, it's worth understanding the two types and what each one does.
+
+**Provider total caps** — Set on OpenAI, Anthropic, or Google. Stops all API calls when your total account spend reaches a threshold. Protects against catastrophic overspend but applies to every agent and workflow equally.
+
+**Per-agent budget caps** — Set in your monitoring tool. Stops a specific agent when it hits its budget. Other agents keep running. This is what AgentShield adds.
+
+Most teams need both.
+
+## Step 1: Set a Provider-Level Safety Net
+
+First, set a hard cap on your provider account. This is your last line of defense.
+
+**OpenAI:**
+1. Go to platform.openai.com → Settings → Limits
+2. Set a "Hard limit" — all API calls stop when this is hit
+3. Set a "Soft limit" — you get an email warning before the hard limit
+
+**Anthropic:**
+Anthropic uses a prepaid credit model. Buy credits, and usage draws from that balance. Set your initial credit purchase conservatively until you understand your usage patterns.
+
+**Google AI:**
+Set billing alerts in Google Cloud Console at 50%, 80%, and 100% of your expected budget.
+
+## Step 2: Identify Your Agents and Their Expected Costs
+
+Before setting per-agent caps, you need baselines. If you don't have them yet, run your agents for a week with tracking enabled and measure.
+
+Typical patterns:
+- Support agents (short context, high volume): $0.05-0.50 per session
+- Research agents (long context, low volume): $0.50-5.00 per session
+- Classifier agents (minimal tokens, very high volume): $0.001-0.01 per session
+
+Set your initial caps at 3-5x your expected daily cost. This gives room for legitimate spikes while catching runaway loops.
+
+## Step 3: Set Per-Agent Caps in AgentShield
+
+Using the Python SDK:
+
+\`\`\`python
+import agentshield as shield
+
+# Set a daily budget cap with automatic freeze
+shield.set_budget(
+    agent_id="research-agent",
+    max_usd=50.0,
+    period="daily",
+    action="freeze"  # or "alert" for email/Slack only
+)
+
+# Set a monthly cap on a cheaper agent
+shield.set_budget(
+    agent_id="support-agent",
+    max_usd=200.0,
+    period="monthly",
+    action="freeze"
+)
+\`\`\`
+
+Using the REST API (for n8n, Make, Zapier, or any language):
+
+\`\`\`bash
+curl -X POST https://api.agentshield.one/v1/budgets \\
+  -H "Authorization: Bearer ags_live_xxxxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "agent_id": "research-agent",
+    "max_usd": 50.0,
+    "period": "daily",
+    "action": "freeze"
+  }'
+\`\`\`
+
+## Step 4: Configure Alerts
+
+Set up alerts before the cap is hit:
+
+\`\`\`python
+shield.set_alert(
+    agent_id="research-agent",
+    threshold_pct=80,  # Alert at 80% of budget
+    channels=["email", "slack"]
+)
+\`\`\`
+
+This gives you time to investigate before the agent freezes.
+
+## Step 5: Test Your Caps
+
+Before going to production, verify your caps work:
+
+1. Set a very low cap (e.g., $0.01) on a test agent
+2. Make a few API calls through it
+3. Verify the agent freezes and you receive the alert
+4. Reset the cap to your production value
+
+## What Happens When a Cap Is Hit
+
+When an agent hits its budget cap with action set to "freeze":
+
+- The agent returns HTTP 402 on the next call
+- An alert is sent to your configured channels
+- The agent stays frozen until you manually reset it or the period resets
+- All other agents continue running normally
+
+This is the key difference from provider total caps: one agent's problem doesn't affect the rest.
+
+## Recommended Cap Strategy
+
+| Agent type | Daily cap | Monthly cap | Action |
+|-----------|-----------|-------------|--------|
+| Support/customer | $10 | $200 | Freeze |
+| Research/long-context | $50 | $500 | Alert at 80%, freeze at 100% |
+| Classifier/cheap | $5 | $50 | Freeze |
+| Experimental/new | $2 | $20 | Freeze |
+
+Start conservative. You can always raise caps. It's harder to explain a surprise $800 charge.`,
+  },
 ]
 
 export function getArticleBySlug(slug: string): Article | undefined {
